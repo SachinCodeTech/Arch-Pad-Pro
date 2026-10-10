@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Secure Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Entity Validation Helpers
+    function isValidProject(data) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'created', 'modified', 'scale'])
+        && data.keys().size() == 6
+        && data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.userId == request.auth.uid
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.created is int
+        && data.modified is int
+        && data.scale is string && data.scale.size() <= 20;
+    }
+
+    function isValidDrawing(data) {
+      return data.keys().hasAll(['projectId', 'userId', 'canvasData', 'modified'])
+        && data.keys().size() == 4
+        && data.projectId is string && data.projectId.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.userId == request.auth.uid
+        && data.canvasData is string && data.canvasData.size() <= 1048000
+        && data.modified is int;
+    }
+
+    // Projects Rules
+    match /projects/{projectId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(projectId) && projectId == request.resource.data.id && isValidProject(request.resource.data);
+      allow update: if isSignedIn() && isValidId(projectId) && resource.data.userId == request.auth.uid && request.resource.data.userId == resource.data.userId && request.resource.data.id == resource.data.id && isValidProject(request.resource.data);
+    }
+
+    // Drawings Rules
+    match /drawings/{projectId} {
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(projectId) && projectId == request.resource.data.projectId && isValidDrawing(request.resource.data);
+      allow update: if isSignedIn() && isValidId(projectId) && resource.data.userId == request.auth.uid && request.resource.data.userId == resource.data.userId && request.resource.data.projectId == resource.data.projectId && isValidDrawing(request.resource.data);
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Architectural Project Metadata",
+      "description": "Metadata for an architectural sketch project",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique ID of the project"
+        },
+        "userId": {
+          "type": "string",
+          "description": "The firebase UID of the owner"
+        },
+        "name": {
+          "type": "string",
+          "description": "The display name of the project"
+        },
+        "created": {
+          "type": "integer",
+          "description": "Creation timestamp in epoch ms"
+        },
+        "modified": {
+          "type": "integer",
+          "description": "Last modification timestamp in epoch ms"
+        },
+        "scale": {
+          "type": "string",
+          "description": "Drawing scale, e.g. 1:100"
+        }
+      },
+      "required": ["id", "userId", "name", "created", "modified", "scale"]
+    },
+    "Drawing": {
+      "title": "Architectural Project Canvas Data",
+      "description": "The raster image representation of the project drawing",
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "description": "The ID of the project this drawing belongs to"
+        },
+        "userId": {
+          "type": "string",
+          "description": "The firebase UID of the owner"
+        },
+        "canvasData": {
+          "type": "string",
+          "description": "The Base64 PNG image data of the canvas"
+        },
+        "modified": {
+          "type": "integer",
+          "description": "Last modification timestamp in epoch ms"
+        }
+      },
+      "required": ["projectId", "userId", "canvasData", "modified"]
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "User specific architectural projects metadata"
+    },
+    "/drawings/{projectId}": {
+      "schema": "Drawing",
+      "description": "Canvas drawing data corresponding to the project"
+    }
+  }
+}
