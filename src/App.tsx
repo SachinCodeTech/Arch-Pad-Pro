@@ -10,9 +10,12 @@ import { Project, ToolType, ThemeType } from './types';
 import {
   getLocalProjects,
   saveLocalProject,
+  getLocalProject,
   deleteLocalProject,
   getLocalDrawing,
-  saveLocalDrawing
+  saveLocalDrawing,
+  getSyncQueue,
+  removeSyncQueueItem
 } from './lib/db';
 import {
   auth,
@@ -91,6 +94,30 @@ export default function App() {
   const startPanPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const initialPanOffset = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
+  // Network and Offline Sync tracking
+  const [isOnline, setIsOnline] = useState<boolean>(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
+
+  // Stroke rollback buffer to eliminate accidental dots and line segments when pinch-gestures start
+  const activeStrokeRollback = useRef<ImageData | null>(null);
+
+  const cancelCurrentStroke = () => {
+    if (isDrawing || isPanning.current || previewData.current) {
+      setIsDrawing(false);
+      isPanning.current = false;
+      previewData.current = null;
+      if (activeStrokeRollback.current && offscreenCanvasRef.current) {
+        const oCtx = offscreenCanvasRef.current.getContext('2d');
+        if (oCtx) {
+          oCtx.putImageData(activeStrokeRollback.current, 0, 0);
+        }
+      }
+      activeStrokeRollback.current = null;
+      redrawVisibleCanvas();
+    }
+  };
+
   const showToast = (msg: string, stat: 'success' | 'info' | null = null) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     setToastMessage(msg);
@@ -109,6 +136,61 @@ export default function App() {
     window.addEventListener('beforeinstallprompt', handleBeforePrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
   }, []);
+
+  // Monitor connectivity: Use IndexedDB to sync local changes when network connection is restored
+  useEffect(() => {
+    const handleOnline = async () => {
+      setIsOnline(true);
+      showToast('Network restored. Synchronizing offline changes...', 'info');
+
+      try {
+        const syncQueue = await getSyncQueue();
+        if (syncQueue.length > 0 && user) {
+          setIsCloudSyncing(true);
+          for (const item of syncQueue) {
+            try {
+              if (item.action === 'upsert') {
+                const proj = await getLocalProject(item.id);
+                const drawing = await getLocalDrawing(item.id);
+                if (proj) {
+                  await uploadProjectToCloud(user.uid, proj, drawing);
+                  await removeSyncQueueItem(item.id);
+                }
+              } else if (item.action === 'delete') {
+                await deleteProjectFromCloud(item.id);
+                await removeSyncQueueItem(item.id);
+              }
+            } catch (itemErr) {
+              console.warn(`Sync queue item ${item.id} deferred:`, itemErr);
+            }
+          }
+          await triggerCloudSynchronize(user.uid);
+          showToast('Offline changes synchronized with Google Cloud ✓', 'success');
+        } else if (user) {
+          await triggerCloudSynchronize(user.uid);
+        } else if (syncQueue.length > 0) {
+          showToast(`${syncQueue.length} offline changes stored securely in IndexedDB.`, 'info');
+        }
+      } catch (err) {
+        console.warn('Auto-sync on reconnect error:', err);
+      } finally {
+        setIsCloudSyncing(false);
+      }
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      showToast('Offline Mode — Changes will be stored in IndexedDB.', 'info');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [user]);
 
   // Listen to auth state changed
   useEffect(() => {
@@ -490,8 +572,7 @@ export default function App() {
       ('touches' in nativeEvent && nativeEvent.touches.length > 1) || 
       ((nativeEvent as any).touches && (nativeEvent as any).touches.length > 1);
     if (hasMultipleTouches) {
-      if (isDrawing) setIsDrawing(false);
-      isPanning.current = false;
+      cancelCurrentStroke();
       return;
     }
 
@@ -547,6 +628,9 @@ export default function App() {
     const oCtx = oCanvas.getContext('2d');
     if (!oCtx) return;
 
+    // Snapshot pre-stroke canvas state so any accidental mark can be rolled back if a 2-finger gesture starts
+    activeStrokeRollback.current = oCtx.getImageData(0, 0, oCanvas.width, oCanvas.height);
+
     if (currentTool === 'pen' || currentTool === 'eraser') {
       takeSnapSnapshot();
       oCtx.beginPath();
@@ -578,8 +662,7 @@ export default function App() {
       ('touches' in nativeEvent && nativeEvent.touches.length > 1) || 
       ((nativeEvent as any).touches && (nativeEvent as any).touches.length > 1);
     if (hasMultipleTouches) {
-      if (isDrawing) setIsDrawing(false);
-      isPanning.current = false;
+      cancelCurrentStroke();
       return;
     }
 
@@ -703,6 +786,7 @@ export default function App() {
         redrawVisibleCanvas();
       }
     }
+    activeStrokeRollback.current = null;
     triggerQuickAutoSaveDelay();
   };
 
@@ -839,9 +923,14 @@ export default function App() {
           [currentProject]: updatedProj
         }));
 
-        // Back up to Cloud instantly if user is logged in
-        if (user) {
-          await uploadProjectToCloud(user.uid, updatedProj, dataUrl);
+        // Back up to Cloud instantly if user is logged in and network is active
+        if (user && navigator.onLine) {
+          try {
+            await uploadProjectToCloud(user.uid, updatedProj, dataUrl);
+            await removeSyncQueueItem(updatedProj.id);
+          } catch (cloudErr) {
+            console.warn('Cloud sync deferred to sync queue:', cloudErr);
+          }
         }
 
         setAutoSaveStatus('saved');
@@ -1239,6 +1328,25 @@ export default function App() {
           </div>
 
           <div className="header-right flex items-center gap-1.5 shrink-0">
+            {/* Offline or Syncing status badge */}
+            {!isOnline && (
+              <span
+                title="Working in offline mode. Changes are automatically saved to IndexedDB and will sync once reconnected."
+                className="bg-amber-500/15 border border-amber-500/30 text-amber-400 font-mono text-[9px] font-bold px-2 py-1 rounded-[6px] select-none flex items-center gap-1"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                OFFLINE
+              </span>
+            )}
+            {isOnline && isCloudSyncing && (
+              <span
+                className="bg-blue-500/15 border border-blue-500/30 text-blue-400 font-mono text-[9px] font-bold px-2 py-1 rounded-[6px] select-none flex items-center gap-1 animate-pulse"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                SYNCING…
+              </span>
+            )}
+
             {/* Native Install Prompt Indicator */}
             {pwaPrompt && (
               <button
@@ -1278,6 +1386,7 @@ export default function App() {
           panOffset={panOffset}
           setPanOffset={setPanOffset}
           setTool={setTool}
+          onCancelStroke={cancelCurrentStroke}
         />
 
         {/* PULLUP CONTROL TOOLBAR */}

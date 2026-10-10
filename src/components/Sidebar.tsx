@@ -163,7 +163,7 @@ export default function Sidebar({
             ) : (
               <div className="p-2.5 mb-2 bg-[#1a1a2e]/20 border border-[var(--border)] rounded-lg text-xs">
                 <p className="text-[var(--text3)] text-[10px] leading-relaxed mb-2 font-mono">
-                  Log in to sync drawings across devices instantly.
+                  IndexedDB local storage active. Sign in to synchronize drawings with Google Cloud across devices.
                 </p>
                 <button
                   onClick={() => {

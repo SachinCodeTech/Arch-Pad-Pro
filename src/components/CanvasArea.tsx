@@ -35,6 +35,9 @@ interface CanvasAreaProps {
   panOffset: { x: number; y: number };
   setPanOffset: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
   setTool: React.Dispatch<React.SetStateAction<ToolType>>;
+
+  // Stroke rollback callback to prevent accidental line segments
+  onCancelStroke?: () => void;
 }
 
 export default function CanvasArea({
@@ -56,7 +59,8 @@ export default function CanvasArea({
   setZoom,
   panOffset,
   setPanOffset,
-  setTool
+  setTool,
+  onCancelStroke
 }: CanvasAreaProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const textInputRef = useRef<HTMLInputElement | null>(null);
@@ -80,7 +84,18 @@ export default function CanvasArea({
     }
   }, [textInputState.visible]);
 
-  // High performance native mouse-wheel zoom and mobile pinch-to-zoom gesture hook
+  // Gesture state tracking
+  const isTwoFingerGesturing = useRef(false);
+  const gestureCooldownUntil = useRef(0);
+  const gestureStartData = useRef<{
+    c0: { x: number; y: number };
+    dist0: number;
+    startZoom: number;
+    startPan: { x: number; y: number };
+    worldAnchor: { x: number; y: number };
+  } | null>(null);
+
+  // High performance native mouse-wheel zoom and two-finger pinch-to-zoom & pan gesture hook
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -100,12 +115,11 @@ export default function CanvasArea({
       const worldX = (mouseX - currentPan.x) / currentZoom;
       const worldY = (mouseY - currentPan.y) / currentZoom;
 
-      // Zoom factor speed
       const zoomFactor = 1.08;
       let newZoom = currentZoom;
 
       if (e.deltaY < 0) {
-        newZoom = Math.min(currentZoom * zoomFactor, 6.0); // zoom in
+        newZoom = Math.min(currentZoom * zoomFactor, 8.0); // zoom in
       } else {
         newZoom = Math.max(currentZoom / zoomFactor, 0.15); // zoom out
       }
@@ -117,68 +131,98 @@ export default function CanvasArea({
       setPanOffset({ x: newPanX, y: newPanY });
     };
 
-    let lastTouchDist = 0;
-    let isPinching = false;
-    let startTouchCenter = { x: 0, y: 0 };
-    let startZoom = 1;
-    let startPan = { x: 0, y: 0 };
-
+    // 2-Finger Touch Pinch & Pan: Respects current drawing coordinate system strictly
     const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
+      if (e.touches.length >= 2) {
         e.preventDefault();
-        isPinching = true;
+        isTwoFingerGesturing.current = true;
+        gestureCooldownUntil.current = Date.now() + 250;
 
+        // Abort any stroke that was accidentally initiated by the first touching finger
+        if (onCancelStroke) {
+          onCancelStroke();
+        }
+
+        const rect = container.getBoundingClientRect();
         const t1 = e.touches[0];
         const t2 = e.touches[1];
 
-        // Measure separation distance between fingers
-        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        lastTouchDist = dist;
+        const c0 = {
+          x: (t1.clientX + t2.clientX) / 2 - rect.left,
+          y: (t1.clientY + t2.clientY) / 2 - rect.top
+        };
+        const dist0 = Math.max(Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY), 1);
+        const startZoom = zoomRef.current;
+        const startPan = { ...panOffsetRef.current };
 
-        const rect = container.getBoundingClientRect();
-        const centerX = (t1.clientX + t2.clientX) / 2 - rect.left;
-        const centerY = (t1.clientY + t2.clientY) / 2 - rect.top;
+        // Calculate exact world point pinned under the two fingers in canvas coordinate system:
+        // Screen = World * zoom + panOffset  =>  World = (Screen - panOffset) / zoom
+        const worldAnchor = {
+          x: (c0.x - startPan.x) / startZoom,
+          y: (c0.y - startPan.y) / startZoom
+        };
 
-        startTouchCenter = { x: centerX, y: centerY };
-        startZoom = zoomRef.current;
-        startPan = { ...panOffsetRef.current };
+        gestureStartData.current = {
+          c0,
+          dist0,
+          startZoom,
+          startPan,
+          worldAnchor
+        };
+      } else if (e.touches.length === 1) {
+        if (isTwoFingerGesturing.current || Date.now() < gestureCooldownUntil.current) {
+          // Trailing finger or cooldown after multi-finger navigation: strictly prevent drawing!
+          e.preventDefault();
+        }
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (isPinching && e.touches.length === 2) {
+      if (isTwoFingerGesturing.current && e.touches.length >= 2) {
         e.preventDefault();
+        const data = gestureStartData.current;
+        if (!data) return;
 
+        const rect = container.getBoundingClientRect();
         const t1 = e.touches[0];
         const t2 = e.touches[1];
 
-        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        if (dist === 0) return;
+        const ct = {
+          x: (t1.clientX + t2.clientX) / 2 - rect.left,
+          y: (t1.clientY + t2.clientY) / 2 - rect.top
+        };
+        const distT = Math.max(Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY), 1);
 
-        const scale = dist / lastTouchDist;
-        let newZoom = startZoom * scale;
-        newZoom = Math.max(0.15, Math.min(newZoom, 6.0));
+        // Compute zoom scale factor
+        const scale = distT / data.dist0;
+        const newZoom = Math.max(0.15, Math.min(data.startZoom * scale, 8.0));
 
-        const rect = container.getBoundingClientRect();
-        const currentCenterX = (t1.clientX + t2.clientX) / 2 - rect.left;
-        const currentCenterY = (t1.clientY + t2.clientY) / 2 - rect.top;
-
-        // Trace center world point
-        const worldX = (startTouchCenter.x - startPan.x) / startZoom;
-        const worldY = (startTouchCenter.y - startPan.y) / startZoom;
-
-        const newPanX = currentCenterX - worldX * newZoom;
-        const newPanY = currentCenterY - worldY * newZoom;
+        // Anchor world point under current center ct:
+        // ct = worldAnchor * newZoom + newPan => newPan = ct - worldAnchor * newZoom
+        const newPan = {
+          x: ct.x - data.worldAnchor.x * newZoom,
+          y: ct.y - data.worldAnchor.y * newZoom
+        };
 
         setZoom(newZoom);
-        setPanOffset({ x: newPanX, y: newPanY });
+        setPanOffset(newPan);
+      } else if (isTwoFingerGesturing.current || Date.now() < gestureCooldownUntil.current) {
+        // Prevent accidental line dragging during single-finger release phase
+        e.preventDefault();
       }
     };
 
-    const handleTouchEnd = () => {
-      if (isPinching) {
-        isPinching = false;
-        lastTouchDist = 0;
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isTwoFingerGesturing.current) {
+        gestureCooldownUntil.current = Date.now() + 250;
+        if (e.touches.length === 0) {
+          // All fingers lifted
+          isTwoFingerGesturing.current = false;
+          gestureStartData.current = null;
+        } else {
+          // One finger remains down, keep gesture lock active to prevent stray strokes
+          isTwoFingerGesturing.current = true;
+        }
       }
     };
 
@@ -195,7 +239,7 @@ export default function CanvasArea({
       container.removeEventListener('touchend', handleTouchEnd);
       container.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [setZoom, setPanOffset]);
+  }, [setZoom, setPanOffset, onCancelStroke]);
 
   const getBadgeText = () => {
     switch (currentTool) {
@@ -237,6 +281,33 @@ export default function CanvasArea({
     }, 120);
   };
 
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e.pointerType === 'touch') {
+      if (isTwoFingerGesturing.current || Date.now() < gestureCooldownUntil.current) {
+        return;
+      }
+    }
+    onPointerDown(e);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e.pointerType === 'touch') {
+      if (isTwoFingerGesturing.current || Date.now() < gestureCooldownUntil.current) {
+        return;
+      }
+    }
+    onPointerMove(e);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e.pointerType === 'touch') {
+      if (isTwoFingerGesturing.current || Date.now() < gestureCooldownUntil.current) {
+        return;
+      }
+    }
+    onPointerUp(e);
+  };
+
   return (
     <div id="canvas-wrap" className="flex-1 relative overflow-hidden bg-[var(--bg)]" ref={containerRef}>
       
@@ -253,9 +324,9 @@ export default function CanvasArea({
           style={{
             cursor: currentTool === 'pan' ? 'grab' : 'crosshair'
           }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
         />
 
         {/* Background CAD Grid Overlay */}
