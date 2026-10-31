@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "app.vercel.arch_pad_pro.twa",
-        "sha256_cert_fingerprints": ["38:D8:A2:11:9C:4D:F5:F6:DA:C8:29:41:8D:5E:08:9E:92:DB:3A:40:7B:EE:23:AF:2B:FC:39:E9:71:3D:87:A3"]
+                "sha256_cert_fingerprints": ["5A:4E:25:18:34:99:50:16:7F:DB:F5:B0:F1:7E:35:07:B5:D6:61:EA:DA:C7:18:E2:7C:79:65A:4E:25:18:34:99:50:16:7F:DB:F5:B0:F1:7E:35:07:B5:D6D:86:4A:60:AB:FD"]
       }
     }]
