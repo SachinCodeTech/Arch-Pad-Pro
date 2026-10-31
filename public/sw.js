@@ -31,6 +31,11 @@ const PRECACHE_ASSETS = [
   '/icons/icon-512.png',
   '/icons/maskable-192.png',
   '/icons/maskable-512.png',
+  '/monochrome-512.png',
+  '/monochrome-192.png',
+  '/icons/monochrome-512.png',
+  '/icons/monochrome-192.png',
+  '/monochrome.svg',
   '/screenshots/screenshot-desktop.png',
   '/screenshots/screenshot-mobile.png'
 ];
