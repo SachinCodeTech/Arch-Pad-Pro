@@ -72,6 +72,8 @@ export default function App() {
 
   // Undo/Redo/Save drawing limits
   const startPoints = useRef({ x: 0, y: 0 });
+  const lastPoint = useRef({ x: 0, y: 0 });
+  const lastMidPoint = useRef({ x: 0, y: 0 });
   const previewData = useRef<ImageData | null>(null);
 
   // Active Modals
@@ -135,6 +137,28 @@ export default function App() {
     };
     window.addEventListener('beforeinstallprompt', handleBeforePrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
+  }, []);
+
+  // Check URL search parameters or hash to open modal in-app without external browser
+  useEffect(() => {
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const modalParam = searchParams.get('modal') || window.location.hash.replace('#', '');
+      if (modalParam === 'privacy' || modalParam === 'privacy-modal') {
+        setActiveModal('privacy-modal');
+      } else if (modalParam === 'about' || modalParam === 'about-modal' || modalParam === 'credits') {
+        setActiveModal('about-modal');
+      } else if (modalParam === 'info' || modalParam === 'info-modal') {
+        setActiveModal('info-modal');
+      }
+      // Clean up URL without reload if query param was present
+      if (searchParams.has('modal')) {
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({ app: 'archpad-active' }, '', cleanUrl);
+      }
+    } catch (e) {
+      console.warn('URL param parse error:', e);
+    }
   }, []);
 
   // Android hardware/gesture back navigation handler
@@ -350,12 +374,12 @@ export default function App() {
   const initOffscreenCanvas = () => {
     if (!offscreenCanvasRef.current) {
       offscreenCanvasRef.current = document.createElement('canvas');
-      offscreenCanvasRef.current.width = 3000;
-      offscreenCanvasRef.current.height = 2000;
+      offscreenCanvasRef.current.width = 5000;
+      offscreenCanvasRef.current.height = 4000;
       const oCtx = offscreenCanvasRef.current.getContext('2d');
       if (oCtx) {
         oCtx.fillStyle = theme === 'light' ? '#ffffff' : '#fafaf8';
-        oCtx.fillRect(0, 0, 3000, 2000);
+        oCtx.fillRect(0, 0, 5000, 4000);
       }
     }
   };
@@ -366,8 +390,10 @@ export default function App() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear the screen canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Seamless full-screen architectural paper workspace (no borders, no cutoff corners)
+    const paperBg = theme === 'light' ? '#ffffff' : '#fafaf8';
+    ctx.fillStyle = paperBg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();
     // Translate and Scale zoom
@@ -375,24 +401,7 @@ export default function App() {
     ctx.scale(zoom, zoom);
 
     if (offscreenCanvasRef.current) {
-      const w = offscreenCanvasRef.current.width;
-      const h = offscreenCanvasRef.current.height;
-
-      // Add a subtle border/shadow for the drafting sheet, making it look incredibly realistic!
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-      ctx.shadowBlur = 12;
-      ctx.shadowOffsetX = 3;
-      ctx.shadowOffsetY = 6;
-
-      ctx.fillStyle = theme === 'light' ? '#ffffff' : '#fafaf8';
-      ctx.fillRect(0, 0, w, h);
-
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-
-      // Draw client artwork
+      // Draw client artwork seamlessly across the infinite paper canvas
       ctx.drawImage(offscreenCanvasRef.current, 0, 0);
     }
     ctx.restore();
@@ -668,6 +677,8 @@ export default function App() {
 
     setIsDrawing(true);
     startPoints.current = { x, y };
+    lastPoint.current = { x, y };
+    lastMidPoint.current = { x, y };
 
     initOffscreenCanvas();
     const oCanvas = offscreenCanvasRef.current;
@@ -750,29 +761,26 @@ export default function App() {
     const oCtx = oCanvas.getContext('2d');
     if (!oCtx) return;
 
-    if (currentTool === 'pen') {
-      oCtx.beginPath();
-      oCtx.moveTo(startPoints.current.x, startPoints.current.y);
-      oCtx.lineTo(x, y);
-      oCtx.lineWidth = pencilSize;
-      oCtx.lineCap = 'round';
-      oCtx.lineJoin = 'round';
-      oCtx.strokeStyle = pencilColor;
-      oCtx.stroke();
-      startPoints.current = { x, y };
-
-      redrawVisibleCanvas();
-    } else if (currentTool === 'eraser') {
-      oCtx.beginPath();
-      oCtx.moveTo(startPoints.current.x, startPoints.current.y);
-      oCtx.lineTo(x, y);
-      oCtx.lineWidth = pencilSize * 3;
-      oCtx.lineCap = 'round';
-      oCtx.lineJoin = 'round';
-      
+    if (currentTool === 'pen' || currentTool === 'eraser') {
+      const isEraser = currentTool === 'eraser';
       const bgHex = theme === 'light' ? '#ffffff' : '#fafaf8';
-      oCtx.strokeStyle = bgHex;
+      const strokeWidth = isEraser ? pencilSize * 3 : pencilSize;
+
+      // Midpoint quadratic Bézier smoothing eliminates all sharp corners and polygonal facets
+      const midX = (lastPoint.current.x + x) / 2;
+      const midY = (lastPoint.current.y + y) / 2;
+
+      oCtx.beginPath();
+      oCtx.moveTo(lastMidPoint.current.x, lastMidPoint.current.y);
+      oCtx.quadraticCurveTo(lastPoint.current.x, lastPoint.current.y, midX, midY);
+      oCtx.lineWidth = strokeWidth;
+      oCtx.lineCap = 'round';
+      oCtx.lineJoin = 'round';
+      oCtx.strokeStyle = isEraser ? bgHex : pencilColor;
       oCtx.stroke();
+
+      lastMidPoint.current = { x: midX, y: midY };
+      lastPoint.current = { x, y };
       startPoints.current = { x, y };
 
       redrawVisibleCanvas();
@@ -822,7 +830,22 @@ export default function App() {
     const oCtx = oCanvas.getContext('2d');
     if (!oCtx) return;
 
-    if (currentTool !== 'pen' && currentTool !== 'eraser') {
+    if (currentTool === 'pen' || currentTool === 'eraser') {
+      const isEraser = currentTool === 'eraser';
+      const bgHex = theme === 'light' ? '#ffffff' : '#fafaf8';
+      const strokeWidth = isEraser ? pencilSize * 3 : pencilSize;
+
+      oCtx.beginPath();
+      oCtx.moveTo(lastMidPoint.current.x, lastMidPoint.current.y);
+      oCtx.lineTo(lastPoint.current.x, lastPoint.current.y);
+      oCtx.lineWidth = strokeWidth;
+      oCtx.lineCap = 'round';
+      oCtx.lineJoin = 'round';
+      oCtx.strokeStyle = isEraser ? bgHex : pencilColor;
+      oCtx.stroke();
+
+      redrawVisibleCanvas();
+    } else {
       const { x, y } = getPointerPos(e);
       if (previewData.current) {
         // Create rollback snapshot BEFORE shape is burned
@@ -1175,7 +1198,7 @@ export default function App() {
       showToast('Backup Restored Successfully!', 'success');
       updateStorageUsageCount();
     } catch (e) {
-      showToast('Error importing .voxpad backup file.');
+      showToast('Error importing .archpad / .voxpad backup file.');
     }
   };
 
@@ -1481,6 +1504,8 @@ export default function App() {
           storageUsedInfo={storageUsedInfo}
           onClearCanvas={handleClearCanvasNow}
           onImportBackup={handleImportBackup}
+          openModal={setActiveModal}
+          appIconSvg={APP_ICON_SVG}
         />
 
         {/* TOAST PANEL BAR ALERT */}

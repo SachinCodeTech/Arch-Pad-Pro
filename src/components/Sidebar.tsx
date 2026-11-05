@@ -340,12 +340,12 @@ export default function Sidebar({
             </span>
           </div>
           <div 
-            className={`sb-section-body overflow-hidden transition-all duration-200 ${collapsed.drawing ? 'collapsed' : ''}`}
-            style={{ maxHeight: collapsed.drawing ? '0px' : '300px' }}
+            className={`sb-section-body overflow-hidden transition-all duration-200 flex flex-col gap-1 ${collapsed.drawing ? 'collapsed' : ''}`}
+            style={{ maxHeight: collapsed.drawing ? '0px' : '320px' }}
           >
             <div
               className={`sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none transition-colors ${
-                currentTool === 'pen' ? 'bg-[#4f8ef7]/12 text-[#4f8ef7] text-[var(--accent)]' : 'text-[var(--text)]'
+                currentTool === 'pen' ? 'bg-[#4f8ef7]/15 text-[#4f8ef7] font-semibold' : 'text-[var(--text)]'
               }`}
               onClick={() => {
                 onClose();
@@ -358,7 +358,7 @@ export default function Sidebar({
             </div>
             <div
               className={`sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none transition-colors ${
-                currentTool === 'eraser' ? 'bg-red-500/12 text-red-500' : 'text-[var(--text)]'
+                currentTool === 'eraser' ? 'bg-red-500/15 text-red-500 font-semibold' : 'text-[var(--text)]'
               }`}
               onClick={() => {
                 onClose();
@@ -371,7 +371,7 @@ export default function Sidebar({
             </div>
             <div
               className={`sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none transition-colors ${
-                currentTool === 'text' ? 'bg-[#4f8ef7]/12 text-[#4f8ef7]' : 'text-[var(--text)]'
+                currentTool === 'text' ? 'bg-[#4f8ef7]/15 text-[#4f8ef7] font-semibold' : 'text-[var(--text)]'
               }`}
               onClick={() => {
                 onClose();
@@ -383,17 +383,22 @@ export default function Sidebar({
               <span className="sb-sub text-[9px] text-[var(--text2)] font-mono">T</span>
             </div>
             <div
-              className={`sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none transition-colors ${
-                gridVisible ? 'bg-[#4f8ef7]/12 text-[#4f8ef7]' : 'text-[var(--text)]'
-              }`}
+              className="sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none text-[var(--text)] transition-colors"
               onClick={() => {
-                onClose();
                 toggleGrid();
               }}
             >
               <span className="sb-ico text-[15px] w-[20px] text-center shrink-0">⊞</span>
               <span className="sb-lbl text-[12px] font-[600] flex-1">Toggle Grid</span>
-              <span className="sb-sub text-[9px] text-[var(--text2)] font-mono">G</span>
+              <span
+                className={`text-[9px] font-mono font-[700] px-2 py-0.5 rounded transition ${
+                  gridVisible
+                    ? 'bg-[#4f8ef7]/20 text-[#4f8ef7] border border-[#4f8ef7]/40'
+                    : 'bg-[var(--bg3)] text-[var(--text3)] border border-[var(--border)]'
+                }`}
+              >
+                {gridVisible ? 'ON' : 'OFF'}
+              </span>
             </div>
             <div
               className="sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none text-[var(--text)] transition-colors"
@@ -421,12 +426,12 @@ export default function Sidebar({
             </span>
           </div>
           <div 
-            className={`sb-section-body overflow-hidden transition-all duration-200 ${collapsed.shapes ? 'collapsed' : ''}`}
+            className={`sb-section-body overflow-hidden transition-all duration-200 flex flex-col gap-1 ${collapsed.shapes ? 'collapsed' : ''}`}
             style={{ maxHeight: collapsed.shapes ? '0px' : '220px' }}
           >
             <div
               className={`sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none transition-colors ${
-                currentTool === 'line' ? 'bg-[#4f8ef7]/12 text-[#4f8ef7]' : 'text-[var(--text)]'
+                currentTool === 'line' ? 'bg-[#4f8ef7]/15 text-[#4f8ef7] font-semibold' : 'text-[var(--text)]'
               }`}
               onClick={() => {
                 onClose();
@@ -438,7 +443,7 @@ export default function Sidebar({
             </div>
             <div
               className={`sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none transition-colors ${
-                currentTool === 'rect' ? 'bg-[#4f8ef7]/12 text-[#4f8ef7]' : 'text-[var(--text)]'
+                currentTool === 'rect' ? 'bg-[#4f8ef7]/15 text-[#4f8ef7] font-semibold' : 'text-[var(--text)]'
               }`}
               onClick={() => {
                 onClose();
@@ -450,7 +455,7 @@ export default function Sidebar({
             </div>
             <div
               className={`sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none transition-colors ${
-                currentTool === 'circle' ? 'bg-[#4f8ef7]/12 text-[#4f8ef7]' : 'text-[var(--text)]'
+                currentTool === 'circle' ? 'bg-[#4f8ef7]/15 text-[#4f8ef7] font-semibold' : 'text-[var(--text)]'
               }`}
               onClick={() => {
                 onClose();
@@ -462,7 +467,7 @@ export default function Sidebar({
             </div>
             <div
               className={`sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none transition-colors ${
-                currentTool === 'arrow' ? 'bg-[#4f8ef7]/12 text-[#4f8ef7]' : 'text-[var(--text)]'
+                currentTool === 'arrow' ? 'bg-[#4f8ef7]/15 text-[#4f8ef7] font-semibold' : 'text-[var(--text)]'
               }`}
               onClick={() => {
                 onClose();
@@ -488,7 +493,7 @@ export default function Sidebar({
             </span>
           </div>
           <div 
-            className={`sb-section-body overflow-hidden transition-all duration-200 ${collapsed.actions ? 'collapsed' : ''}`}
+            className={`sb-section-body overflow-hidden transition-all duration-200 flex flex-col gap-1 ${collapsed.actions ? 'collapsed' : ''}`}
             style={{ maxHeight: collapsed.actions ? '0px' : '360px' }}
           >
             <div
@@ -580,7 +585,7 @@ export default function Sidebar({
             </span>
           </div>
           <div 
-            className={`sb-section-body overflow-hidden transition-all duration-200 ${collapsed.app ? 'collapsed' : ''}`}
+            className={`sb-section-body overflow-hidden transition-all duration-200 flex flex-col gap-1 ${collapsed.app ? 'collapsed' : ''}`}
             style={{ maxHeight: collapsed.app ? '0px' : '300px' }}
           >
             <div className="sb-theme-row flex gap-1 p-[4px_4px]">
@@ -651,7 +656,7 @@ export default function Sidebar({
 
         <div className="sb-footer p-[12px_14px] border-t border-[var(--border)] shrink-0 mt-auto">
           <div className="sb-footer-txt font-mono text-[8px] text-[var(--text3)] tracking-[1px] text-center uppercase">
-            ARCH PAD v2.0 · CODETECH © 2026
+            ARCH PAD v2.0 · CODETECH APP STORE © 2026
           </div>
         </div>
       </div>

@@ -480,7 +480,16 @@ export default function Toolbar({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              setZoom((z) => Math.min(z + 0.15, 3.0));
+              const oldZoom = zoom;
+              const newZoom = Math.min(Math.round((oldZoom + 0.15) * 100) / 100, 3.0);
+              if (newZoom === oldZoom) return;
+              const cx = window.innerWidth / 2;
+              const cy = window.innerHeight / 2;
+              setPanOffset((prev) => ({
+                x: cx - (cx - prev.x) * (newZoom / oldZoom),
+                y: cy - (cy - prev.y) * (newZoom / oldZoom)
+              }));
+              setZoom(newZoom);
             }}
             className="w-[20px] h-[20px] flex items-center justify-center font-sans text-[11px] font-[900] bg-[var(--bg3)] hover:bg-[var(--bg4)] border border-[var(--border2)] rounded-[4px] text-[#4f8ef7] hover:scale-[1.05] active:scale-[0.95] transition cursor-pointer"
           >
@@ -497,11 +506,16 @@ export default function Toolbar({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              setZoom((z) => {
-                const nz = Math.max(z - 0.15, 0.4);
-                if (nz === 1.0) setPanOffset({ x: 0, y: 0 });
-                return nz;
-              });
+              const oldZoom = zoom;
+              const newZoom = Math.max(Math.round((oldZoom - 0.15) * 100) / 100, 0.4);
+              if (newZoom === oldZoom) return;
+              const cx = window.innerWidth / 2;
+              const cy = window.innerHeight / 2;
+              setPanOffset((prev) => ({
+                x: cx - (cx - prev.x) * (newZoom / oldZoom),
+                y: cy - (cy - prev.y) * (newZoom / oldZoom)
+              }));
+              setZoom(newZoom);
             }}
             className="w-[20px] h-[20px] flex items-center justify-center font-sans text-[11px] font-[900] bg-[var(--bg3)] hover:bg-[var(--bg4)] border border-[var(--border2)] rounded-[4px] text-white hover:scale-[1.05] active:scale-[0.95] transition cursor-pointer"
           >

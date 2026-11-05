@@ -2,18 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Privacy Policy – Arch Pad</title>
-    <meta name="description" content="Privacy Policy for Arch Pad architectural drafting application by CodeTech Solutions / Sheth Sachin D." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Privacy Policy – Arch Pad Pro</title>
+    <meta name="description" content="Official Privacy Policy and Data Governance Statement for Arch Pad Pro by CodeTech App Store." />
+    <meta name="theme-color" content="#090c12" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <style>
       :root {
-        --bg: #0c1016;
-        --card: #141923;
-        --border: rgba(255, 255, 255, 0.1);
+        --bg: #090c12;
+        --card: #0f1420;
+        --card-hover: #141b2a;
+        --border: rgba(255, 255, 255, 0.08);
+        --border-highlight: rgba(79, 142, 247, 0.25);
         --accent: #4f8ef7;
-        --text: #e8e8f0;
-        --text-muted: #9aa5b8;
+        --accent-glow: rgba(79, 142, 247, 0.12);
+        --text: #f3f6fc;
+        --text-muted: #8e9bb0;
+        --text-dim: #606d82;
       }
       * {
         box-sizing: border-box;
@@ -23,187 +35,378 @@
       body {
         background-color: var(--bg);
         color: var(--text);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        line-height: 1.65;
+        font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.7;
         padding: 32px 16px 64px;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrapper {
+        max-width: 800px;
+        margin: 0 auto;
       }
       .container {
-        max-width: 760px;
-        margin: 0 auto;
         background: var(--card);
         border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 36px 28px;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+        border-radius: 20px;
+        padding: 40px 36px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
       }
       .header {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 16px;
-        margin-bottom: 24px;
-        padding-bottom: 20px;
+        padding-bottom: 24px;
         border-bottom: 1px solid var(--border);
       }
+      .brand-lockup {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
       .logo {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: #0d1117;
+        padding: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
       }
       h1 {
         font-size: 24px;
-        font-weight: 700;
+        font-weight: 800;
         color: #ffffff;
+        letter-spacing: -0.4px;
+        line-height: 1.2;
       }
       .subtitle {
-        font-size: 13px;
+        font-size: 11.5px;
         color: var(--accent);
         font-weight: 600;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-top: 4px;
       }
-      .badge-row {
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+      }
+      .back-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        border-color: var(--border-highlight);
+      }
+
+      /* Editorial Unboxed Metadata Bar */
+      .meta-strip {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
         gap: 8px;
-        margin-bottom: 24px;
+        padding: 14px 18px;
+        margin-top: 24px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-family: "JetBrains Mono", monospace;
       }
-      .badge {
-        font-size: 11px;
-        background: rgba(79, 142, 247, 0.12);
-        color: var(--accent);
-        border: 1px solid rgba(79, 142, 247, 0.3);
-        padding: 4px 10px;
-        border-radius: 6px;
+      .meta-strip span.sep {
+        color: var(--text-dim);
+      }
+      .meta-strip strong {
+        color: var(--text);
         font-weight: 600;
       }
+
+      /* Trust Highlight Card */
+      .trust-card {
+        margin: 24px 0 32px;
+        padding: 20px 22px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, rgba(79, 142, 247, 0.08) 0%, rgba(124, 92, 247, 0.04) 100%);
+        border: 1px solid var(--border-highlight);
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .trust-icon {
+        font-size: 24px;
+        line-height: 1;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .trust-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 4px;
+      }
+      .trust-desc {
+        font-size: 13px;
+        color: #c0cce0;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      /* Content Sections */
       h2 {
         font-size: 17px;
-        font-weight: 600;
-        margin-top: 28px;
+        font-weight: 700;
+        margin-top: 36px;
         margin-bottom: 12px;
         color: #ffffff;
+        letter-spacing: -0.2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      h2 .sec-num {
+        font-family: "JetBrains Mono", monospace;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 600;
       }
       p, li {
-        font-size: 14px;
+        font-size: 13.5px;
         color: var(--text-muted);
-        margin-bottom: 12px;
+        line-height: 1.7;
+        margin-bottom: 14px;
       }
       ul {
         margin-left: 20px;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
       }
       li {
-        margin-bottom: 6px;
+        margin-bottom: 8px;
       }
       strong {
         color: var(--text);
+        font-weight: 600;
       }
-      .contact-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 16px 20px;
-        margin-top: 24px;
-      }
-      .contact-card a {
+      a {
         color: var(--accent);
         text-decoration: none;
       }
-      .footer {
-        text-align: center;
-        margin-top: 36px;
-        font-size: 12px;
+      a:hover {
+        text-decoration: underline;
+      }
+
+      /* Developer Contact & Verification Card */
+      .contact-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 20px 22px;
+        margin-top: 32px;
+      }
+      .contact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+      .contact-item {
+        font-size: 12.5px;
         color: var(--text-muted);
       }
-      a.back-link {
-        display: inline-block;
-        margin-top: 20px;
-        font-size: 13px;
-        color: var(--accent);
-        text-decoration: none;
+      .contact-item .label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        display: block;
+        margin-bottom: 2px;
+      }
+      .contact-item .value {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+        font-size: 11.5px;
+        color: var(--text-dim);
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 16px 10px 48px;
+        }
+        .container {
+          padding: 24px 18px;
+          border-radius: 16px;
+        }
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 14px;
+        }
+        .back-btn {
+          width: 100%;
+          justify-content: center;
+        }
+        h1 {
+          font-size: 20px;
+        }
+        .meta-strip {
+          font-size: 11px;
+          padding: 10px 14px;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <div class="header">
-        <img src="/icon.svg" alt="Arch Pad Logo" class="logo" />
-        <div>
-          <h1>Privacy Policy</h1>
-          <div class="subtitle">ARCH PAD · ARCHITECTURAL CAD SKETCHBOOK</div>
+    <div class="wrapper">
+      <div class="container">
+        <div class="header">
+          <div class="brand-lockup">
+            <img src="/icon.svg" alt="Arch Pad Logo" class="logo" />
+            <div>
+              <h1>Privacy Policy</h1>
+              <div class="subtitle">Arch Pad Pro · Architectural CAD Sketchbook</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button onclick="returnToApp()" class="back-btn" style="cursor: pointer;">← Return to App</button>
+            <a href="/?modal=privacy" class="back-btn" style="background: rgba(79, 142, 247, 0.15); border-color: rgba(79, 142, 247, 0.4); color: #4f8ef7;">⚡ In-App Reader</a>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px 16px; border-radius: 12px; background: rgba(79, 142, 247, 0.08); border: 1px solid rgba(79, 142, 247, 0.2); font-size: 12px; color: #b6ceff; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+          <span>📱 <strong>In-App Expansion Available:</strong> You can view, expand, and read this complete policy directly inside the Arch Pad Pro canvas under <em>Sidebar → App → Privacy Policy</em>.</span>
+          <a href="/?modal=privacy" style="color: #ffffff; background: #4f8ef7; padding: 4px 12px; border-radius: 6px; font-weight: 600; font-size: 11px; text-decoration: none;">Launch In App</a>
+        </div>
+
+        <div class="meta-strip">
+          <span>Application: <strong>Arch Pad Pro</strong></span>
+          <span class="sep">·</span>
+          <span>Package: <strong>app.vercel.arch_pad_pro.twa</strong></span>
+          <span class="sep">·</span>
+          <span>Entity: <strong>CodeTech App Store</strong></span>
+          <span class="sep">·</span>
+          <span>Effective: <strong>November 2026</strong></span>
+        </div>
+
+        <div class="trust-card">
+          <div class="trust-icon">🛡</div>
+          <div>
+            <div class="trust-title">Data Sovereignty & Offline-First Guarantee</div>
+            <p class="trust-desc">
+              Arch Pad Pro operates on a strict on-device data sovereignty model. Your blueprints, sketches, CAD measurements, and project assets are processed and stored locally on your device without third-party tracking, advertising SDKs, or background telemetry.
+            </p>
+          </div>
+        </div>
+
+        <h2><span class="sec-num">01.</span> Overview & Offline-First Architecture</h2>
+        <p>
+          Arch Pad Pro is built from the ground up as a standalone, offline-first architectural drafting workstation. When you create sketches, calibrate architectural scales, or annotate drawings, all vector strokes and project metadata are saved directly to your device's isolated IndexedDB sandboxed database.
+        </p>
+        <p>
+          The application does not require an active internet connection to deliver complete functionality. You can draft, edit, and export architectural plans anywhere—including remote construction sites, underground basements, and flights.
+        </p>
+
+        <h2><span class="sec-num">02.</span> Information We Handle</h2>
+        <ul>
+          <li><strong>Local Vector & Drawing Data:</strong> All canvas paths, dimension calculations, text annotations, and project workspaces reside strictly in your device's local memory and browser storage. We do not inspect, transmit, or monetize your creative designs.</li>
+          <li><strong>Zero Advertising & Zero Analytics Telemetry:</strong> Arch Pad Pro does not incorporate Google Analytics, commercial tracker SDKs, profiling pixels, or advertising identifiers.</li>
+          <li><strong>Optional Cloud Synchronization:</strong> If you intentionally choose to sign in with your Google Account, the app connects to Google Firebase Authentication and Firestore to synchronize drawings across your authorized personal devices. We never receive or store your Google account password.</li>
+        </ul>
+
+        <h2><span class="sec-num">03.</span> Device Permissions & Purpose</h2>
+        <ul>
+          <li><strong>Internet Access:</strong> Required strictly for verifying Digital Asset Links in Trusted Web Activity (TWA) mode and performing user-initiated Google Cloud Firestore synchronization.</li>
+          <li><strong>Local Storage (IndexedDB):</strong> Required to persist project blueprints and canvas buffers between app sessions on your device.</li>
+          <li><strong>File Export & System Share:</strong> Invoked only when you explicitly export high-definition presentation cards, PNG images, PDF prints, or .archpad backup files to your device storage or via the native Android share intent.</li>
+        </ul>
+
+        <h2><span class="sec-num">04.</span> Third-Party Service Providers</h2>
+        <p>
+          We do not sell, license, or disclose user data to data brokers. The following trusted platform services are utilized solely for essential runtime infrastructure:
+        </p>
+        <ul>
+          <li><strong>Google Firebase (Google LLC):</strong> Facilitates voluntary cloud synchronization and secure Google Authentication when activated by the user. Governed by the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.</li>
+          <li><strong>Vercel Inc.:</strong> Delivers application shell delivery, static asset caching, and SSL/TLS HTTPS encryption.</li>
+        </ul>
+
+        <h2><span class="sec-num">05.</span> User Control & Data Deletion</h2>
+        <p>
+          You maintain unconditional authority over your project data:
+        </p>
+        <ul>
+          <li><strong>Local Erasure:</strong> You can delete any sketch or reset your entire workspace at any time via the Projects Dashboard or "Clear Canvas" feature. This immediately wipes the local IndexedDB records.</li>
+          <li><strong>Cloud Erasure:</strong> When deleting a sketch inside the app, it is simultaneously removed from your personal Google Cloud Firestore database. For full account deletion requests, simply contact our support desk below.</li>
+        </ul>
+
+        <h2><span class="sec-num">06.</span> Compliance & Store Certification</h2>
+        <p>
+          Arch Pad Pro is distributed in compliance with the developer program policies of the <strong>Indus Appstore / PhonePe Appstore</strong> and Google Play. It complies with COPPA guidelines and does not knowingly collect personal information from children under 13.
+        </p>
+
+        <h2><span class="sec-num">07.</span> Publisher & Legal Contact Information</h2>
+        <div class="contact-card">
+          <div class="contact-grid">
+            <div class="contact-item">
+              <span class="label">Publisher Organization</span>
+              <span class="value">CodeTech App Store</span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Lead Developer</span>
+              <span class="value">Sheth Sachin D</span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Support & Inquiries</span>
+              <span class="value"><a href="mailto:codetech.appstore@gmail.com">codetech.appstore@gmail.com</a></span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Android Package Identifier</span>
+              <span class="value">app.vercel.arch_pad_pro.twa</span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Production Domain</span>
+              <span class="value"><a href="https://arch-pad-pro.vercel.app">https://arch-pad-pro.vercel.app</a></span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Terms of Service</span>
+              <span class="value"><a href="/terms.html">View Terms of Service →</a></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          © 2026 CodeTech App Store · All rights reserved · Arch Pad Pro
         </div>
       </div>
-
-      <div class="badge-row">
-        <span class="badge">Application: Arch Pad</span>
-        <span class="badge">Package: app.vercel.arch_pad_pro.twa</span>
-        <span class="badge">Developer: Sheth Sachin D / CodeTech Solutions</span>
-        <span class="badge">Updated: November 2026</span>
-      </div>
-
-      <p>
-        Welcome to <strong>Arch Pad</strong>. This Privacy Policy informs you of our policies regarding the collection, use, and disclosure of personal data when you use our application and the choices you have associated with that data.
-      </p>
-
-      <h2>1. Overview & Offline-First Principles</h2>
-      <p>
-        Arch Pad is designed as an <strong>offline-first architectural drafting and CAD sketching tool</strong>. Your drawings, scale parameters, and blueprints are processed and stored locally on your device using client-side IndexedDB storage. You do not need to register an account or provide any personal details to sketch, export, or design plans.
-      </p>
-
-      <h2>2. Information We Collect and Receive</h2>
-      <ul>
-        <li><strong>Local Drawing Data:</strong> All vector and raster canvas strokes, measurements, and project metadata are saved strictly inside your browser's local sandbox storage (IndexedDB). We cannot view, access, or sell this data.</li>
-        <li><strong>Optional Google Authentication:</strong> If you intentionally choose to sign in with Google to synchronize your projects across devices, Firebase Authentication securely processes your email address and Google user identifier. No passwords are ever accessed or stored by us.</li>
-        <li><strong>Optional Cloud Storage:</strong> If you use cloud synchronization, your project drawings are saved in your private Google Cloud Firestore collection, accessible only when logged in with your authenticated credentials.</li>
-        <li><strong>Telemetry & Cookies:</strong> We do not use advertising identifiers, marketing trackers, or third-party behavioral cookies.</li>
-      </ul>
-
-      <h2>3. Device Permissions & How They Are Used</h2>
-      <ul>
-        <li><strong>Internet Access:</strong> Used exclusively to load remote cloud backups (when signed in) and verify Digital Asset Links for standalone Trusted Web Activity (TWA) execution.</li>
-        <li><strong>File Export / Downloads:</strong> Used when you explicitly choose to export your architectural sketch as a PNG, JPEG, PDF, or .voxpad backup file to your device storage or share it via the Android share sheet.</li>
-      </ul>
-
-      <h2>4. Data Sharing & Third-Party Services</h2>
-      <p>
-        We do not sell, rent, or trade your personal information or drawings. We interact with the following trusted service providers strictly to deliver core app functionality:
-      </p>
-      <ul>
-        <li><strong>Google Firebase (Google LLC):</strong> Provides secure authentication and cloud database synchronization when selected by the user. Governed by the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Google Privacy Policy</a>.</li>
-        <li><strong>Vercel Inc.:</strong> Delivers application hosting, static asset distribution, and SSL certificate encryption.</li>
-      </ul>
-
-      <h2>5. Data Retention and Deletion</h2>
-      <p>
-        You have total control over your data:
-      </p>
-      <ul>
-        <li><strong>Local Data:</strong> You can delete any project or clear all data instantly via the Projects Dashboard or "Clear Canvas" feature inside the app.</li>
-        <li><strong>Cloud Data:</strong> Deleting a project within the app automatically purges it from Google Firestore as well. If you would like all cloud account data purged, you can sign out or contact us at the email below.</li>
-      </ul>
-
-      <h2>6. Children's Privacy</h2>
-      <p>
-        Our service does not address anyone under the age of 13. We do not knowingly collect personally identifiable information from children under 13.
-      </p>
-
-      <h2>7. Changes to This Privacy Policy</h2>
-      <p>
-        We may update our Privacy Policy from time to time. Any changes will be posted on this page with an updated revision date.
-      </p>
-
-      <h2>8. Developer Contact Information</h2>
-      <div class="contact-card">
-        <p><strong>Developer:</strong> SHETH SACHIN D / CodeTech Solutions</p>
-        <p><strong>Package Name:</strong> app.vercel.arch_pad_pro.twa</p>
-        <p><strong>Support & Privacy Inquiries:</strong> <a href="mailto:drs52ss19@gmail.com">drs52ss19@gmail.com</a></p>
-        <p><strong>Application URL:</strong> <a href="https://arch-pad-pro.vercel.app">https://arch-pad-pro.vercel.app</a></p>
-      </div>
-
-      <a href="/" class="back-link">← Return to Arch Pad App</a>
-
-      <div class="footer">
-        © 2026 CodeTech Solutions · All rights reserved.
-      </div>
     </div>
+
+    <script>
+      function returnToApp() {
+        if (window.opener && !window.opener.closed) {
+          window.close();
+          return;
+        }
+        if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) {
+          window.history.back();
+          return;
+        }
+        window.location.href = '/?modal=privacy';
+      }
+    </script>
   </body>
 </html>

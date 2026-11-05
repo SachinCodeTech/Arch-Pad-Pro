@@ -309,18 +309,18 @@ export default function CanvasArea({
   };
 
   return (
-    <div id="canvas-wrap" className="flex-1 relative overflow-hidden bg-[var(--bg)]" ref={containerRef}>
+    <div id="canvas-wrap" className="flex-1 relative overflow-hidden bg-[var(--canvas-bg)]" ref={containerRef}>
       
       {/* Canvas Viewport containing stationary high performance drawing canvas */}
       <div
         id="canvas-viewport"
         className="absolute top-0 left-0 w-full h-full"
       >
-        {/* Active Sketch Canvas with perpetual blinking animation */}
+        {/* Active Sketch Canvas */}
         <canvas
           id="sketchCanvas"
           ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full block bg-[var(--canvas-bg)] transition-colors duration-200 touch-none canvas-blink-effect"
+          className="absolute top-0 left-0 w-full h-full block bg-[var(--canvas-bg)] transition-colors duration-200 touch-none"
           style={{
             cursor: currentTool === 'pan' ? 'grab' : 'crosshair'
           }}

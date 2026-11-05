@@ -16,6 +16,8 @@ interface ModalsProps {
   storageUsedInfo: string;
   onClearCanvas: () => void;
   onImportBackup: (backupData: any) => void;
+  openModal?: (modal: string) => void;
+  appIconSvg?: string;
 }
 
 export default function Modals({
@@ -32,7 +34,9 @@ export default function Modals({
   canvasRef,
   storageUsedInfo,
   onClearCanvas,
-  onImportBackup
+  onImportBackup,
+  openModal,
+  appIconSvg
 }: ModalsProps) {
   const [newProjName, setNewProjName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,6 +44,10 @@ export default function Modals({
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [aboutTab, setAboutTab] = useState<'overview' | 'credits' | 'changelog' | 'disclaimer'>('overview');
+  const [privacyTab, setPrivacyTab] = useState<'privacy' | 'disclaimer' | 'terms'>('privacy');
+  const [infoTab, setInfoTab] = useState<'diagnostics' | 'credits' | 'governance'>('diagnostics');
+  const [expandFullPolicy, setExpandFullPolicy] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -388,7 +396,7 @@ export default function Modals({
           new Blob([JSON.stringify(backup)], { type: 'application/json' })
         );
         const link = document.createElement('a');
-        link.download = `voxpad_backup_${Date.now()}.voxpad`;
+        link.download = `archpad_backup_${Date.now()}.archpad`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
@@ -415,7 +423,7 @@ export default function Modals({
         onImportBackup(data);
         closeActiveModal();
       } catch (err) {
-        alert('Failed to parse backup file. Please make sure it is a valid .voxpad backup file.');
+        alert('Failed to parse backup file. Please make sure it is a valid .archpad or .voxpad backup file.');
       }
     };
     reader.readAsText(file);
@@ -708,17 +716,17 @@ export default function Modals({
               >
                 <div className="exp-icon text-[20px] mb-1">💼</div>
                 <div className="exp-label text-[10px] text-[var(--text2)] font-mono tracking-[0.5px]">Backup App</div>
-                <div className="exp-ext text-[9px] text-[var(--text3)] mt-0.5 font-mono">.voxpad · Backup</div>
+                <div className="exp-ext text-[9px] text-[var(--text3)] mt-0.5 font-mono">.archpad · Backup</div>
               </div>
             </div>
 
             {/* Direct Import Concept for PWA standalone */}
             <div className="mt-4 pt-3 border-t border-[var(--border)]">
               <label className="block text-center text-[10px] font-mono text-[var(--text2)] cursor-pointer hover:text-[#4f8ef7] transition">
-                📂 Import Backup (.voxpad)
+                📂 Import Backup (.archpad / .voxpad)
                 <input
                   type="file"
-                  accept=".voxpad,application/json"
+                  accept=".archpad,.voxpad,application/json"
                   className="hidden"
                   onChange={handleBackupFileSelect}
                 />
@@ -727,129 +735,955 @@ export default function Modals({
           </div>
         )}
 
-        {/* ABOUT MODAL */}
+        {/* ABOUT MODAL - ARCHITECTURAL CAD SKETCHBOOK */}
         {activeModal === 'about-modal' && (
-          <div className="modal bg-[var(--bg2)] border border-[var(--border2)] rounded-[14px] p-6 max-w-[340px] w-full transform transition-all duration-200">
-            <button
-              className="modal-close float-right bg-none border-none text-[var(--text3)] text-[18px] cursor-pointer pl-2 hover:text-[var(--text)]"
-              onClick={closeActiveModal}
-            >
-              ×
-            </button>
-            <h2 className="text-[16px] font-[700] mb-1 text-[var(--text)]">Arch Pad</h2>
-            <div className="sub text-[10px] text-[var(--text2)] font-mono tracking-[0.5px] mb-[18px]">
-              VERSION 1.1 · STABLE PWA
-            </div>
-            <div className="privacy-text text-[11px] leading-[1.7] text-[var(--text2)] mt-2">
-              <p className="mb-2.5">
-                Designed for architects, engineers, and designers to quickly sketch ideas, site dimensions, and plan concepts — work offline seamlessly!
-              </p>
-              <p>
-                Vox Pad works offline-first using local high-speed database buffers, letting you sketch even in tunnels or remote build sites.
-              </p>
-            </div>
-            <div className="mt-4 border-t border-[var(--border)] pt-2.5">
-              <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] last:border-none">
-                <span className="info-label text-[var(--text2)] font-mono text-[10px]">Company</span>
-                <span className="info-val text-[var(--text)] font-semibold">CodeTech Solutions</span>
+          <div className="modal bg-[var(--bg2)] border border-[var(--border2)] rounded-2xl p-6 max-w-[500px] w-[94vw] max-h-[88vh] overflow-y-auto transform transition-all duration-200 shadow-2xl">
+            {/* Header with App Logo */}
+            <div className="flex items-start justify-between gap-3 pb-4 border-b border-[var(--border)]">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-[#0d1117] border border-white/10 p-1 shrink-0 flex items-center justify-center shadow-md">
+                  <img src={appIconSvg || '/icon.svg'} alt="Arch Pad Icon" className="w-full h-full object-contain" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-[17px] font-bold text-white tracking-tight">Arch Pad Pro</h2>
+                    <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded bg-[#4f8ef7]/15 text-[#4f8ef7] border border-[#4f8ef7]/30">
+                      v2.0
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-[var(--text2)] font-medium mt-0.5">
+                    Architectural CAD & Drafting Sketchbook
+                  </div>
+                  <div className="text-[9px] text-[var(--text3)] font-mono mt-1">
+                    Standalone TWA · Offline-First Engine
+                  </div>
+                </div>
               </div>
-              <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] last:border-none">
-                <span className="info-label text-[var(--text2)] font-mono text-[10px]">Lead Arch Architect</span>
-                <span className="info-val text-[var(--text)] font-semibold">Sachin Sheth</span>
-              </div>
-              <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] last:border-none">
-                <span className="info-label text-[var(--text2)] font-mono text-[10px]">PWA Offline Engine</span>
-                <span className="info-val text-[#4f8ef7] font-semibold">StandAlone Store</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* SYSTEM APP INFO MODAL */}
-        {activeModal === 'info-modal' && (
-          <div className="modal bg-[var(--bg2)] border border-[var(--border2)] rounded-[14px] p-6 max-w-[340px] w-full transform transition-all duration-200">
-            <button
-              className="modal-close float-right bg-none border-none text-[var(--text3)] text-[18px] cursor-pointer pl-2 hover:text-[var(--text)]"
-              onClick={closeActiveModal}
-            >
-              ×
-            </button>
-            <h2 className="text-[16px] font-[700] mb-1 text-[var(--text)]">⚙ App Information</h2>
-            <div className="sub text-[10px] text-[var(--text2)] font-mono tracking-[0.5px] mb-4">
-              SYSTEM & LOCAL STORAGE
-            </div>
-            <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] last:border-none">
-              <span className="info-label text-[var(--text2)] font-mono text-[10px]">App Version</span>
-              <span className="info-val text-[var(--text)] font-semibold">1.1.0</span>
-            </div>
-            <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] last:border-none">
-              <span className="info-label text-[var(--text2)] font-mono text-[10px]">Platform Model</span>
-              <span className="info-val text-[var(--text)] font-semibold">Standalone PWA Ready</span>
-            </div>
-            <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] last:border-none">
-              <span className="info-label text-[var(--text2)] font-mono text-[10px]">Storage Mode</span>
-              <span className="info-val text-green-500 font-semibold">Offline IndexedDB (Unlimited)</span>
-            </div>
-            <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] last:border-none">
-              <span className="info-label text-[var(--text2)] font-mono text-[10px]">Canvas Workspace</span>
-              <span className="info-val text-[var(--text)] font-semibold" id="canvas-size-info">
-                {windowWidth}×{windowHeight}px
-              </span>
-            </div>
-            <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] last:border-none">
-              <span className="info-label text-[var(--text2)] font-mono text-[10px]">IndexedDB Cache</span>
-              <span className="info-val text-[#4f8ef7] font-semibold" id="storage-used-info">
-                {storageUsedInfo}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* PRIVACY POLICY */}
-        {activeModal === 'privacy-modal' && (
-          <div className="modal bg-[var(--bg2)] border border-[var(--border2)] rounded-[14px] p-6 max-w-[340px] w-full transform transition-all duration-200">
-            <button
-              className="modal-close float-right bg-none border-none text-[var(--text3)] text-[18px] cursor-pointer pl-2 hover:text-[var(--text)]"
-              onClick={closeActiveModal}
-            >
-              ×
-            </button>
-            <h2 className="text-[16px] font-[700] mb-1 text-[var(--text)]">🔒 Privacy Policy</h2>
-            <div className="sub text-[10px] text-[var(--text2)] font-mono tracking-[0.5px] mb-[18px]">
-              CODETECH PRIVACY ASSURANCE
-            </div>
-            <div className="privacy-text text-[11px] leading-[1.7] text-[var(--text2)] mt-2">
-              <p className="mb-2">
-                Arch Pad stores all personal drawings, measurements, and project assets <strong>locally on your device only</strong> using state-of-the-art secure isolated IndexedDB storage API.
-              </p>
-              <p className="mb-2">
-                No third-party cookies, no tracking telemetry, and no telemetry analytics are transmitted. Your creative ideas remain completely yours.
-              </p>
-              <p>
-                Optional Firestore Synchronization is entirely select-in and uses secure Google Account authorization for your safety.
-              </p>
-            </div>
-            <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] mt-3 last:border-none">
-              <span className="info-label text-[var(--text2)] font-mono text-[10px]">Developer</span>
-              <span className="info-val text-[var(--text)] font-semibold">Sheth Sachin D</span>
-            </div>
-            <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] last:border-none">
-              <span className="info-label text-[var(--text2)] font-mono text-[10px]">Package</span>
-              <span className="info-val text-[var(--text2)] font-mono text-[10px]">app.vercel.arch_pad_pro.twa</span>
-            </div>
-            <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] last:border-none">
-              <span className="info-label text-[var(--text2)] font-mono text-[10px]">Support</span>
-              <a href="mailto:drs52ss19@gmail.com" className="info-val text-[#4f8ef7] font-semibold text-[11px] hover:underline">drs52ss19@gmail.com</a>
-            </div>
-            <div className="mt-3 pt-2 text-center">
-              <a 
-                href="/privacy.html" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-block text-[11px] font-mono text-[#4f8ef7] hover:underline"
+              <button
+                className="w-8 h-8 rounded-lg bg-[var(--bg3)] hover:bg-[var(--bg4)] flex items-center justify-center text-[var(--text3)] hover:text-white transition text-lg leading-none cursor-pointer border-0 shrink-0"
+                onClick={closeActiveModal}
+                title="Close"
               >
-                View Full Web Privacy Policy →
-              </a>
+                ×
+              </button>
+            </div>
+
+            {/* In-Modal Navigation Tabs */}
+            <div className="flex p-1 bg-[var(--bg3)] rounded-xl border border-[var(--border)] my-3.5 text-[10.5px] font-semibold gap-0.5">
+              <button
+                onClick={() => setAboutTab('overview')}
+                className={`flex-1 py-1.5 px-1.5 rounded-lg transition text-center cursor-pointer border-0 ${
+                  aboutTab === 'overview'
+                    ? 'bg-[var(--bg2)] text-white shadow-sm border border-[var(--border2)]'
+                    : 'bg-transparent text-[var(--text3)] hover:text-[var(--text)]'
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setAboutTab('credits')}
+                className={`flex-1 py-1.5 px-1.5 rounded-lg transition text-center cursor-pointer border-0 ${
+                  aboutTab === 'credits'
+                    ? 'bg-[var(--bg2)] text-[#4f8ef7] shadow-sm border border-[var(--border2)]'
+                    : 'bg-transparent text-[var(--text3)] hover:text-[var(--text)]'
+                }`}
+              >
+                Credits & Tech
+              </button>
+              <button
+                onClick={() => setAboutTab('changelog')}
+                className={`flex-1 py-1.5 px-1.5 rounded-lg transition text-center cursor-pointer border-0 ${
+                  aboutTab === 'changelog'
+                    ? 'bg-[var(--bg2)] text-white shadow-sm border border-[var(--border2)]'
+                    : 'bg-transparent text-[var(--text3)] hover:text-[var(--text)]'
+                }`}
+              >
+                History
+              </button>
+              <button
+                onClick={() => setAboutTab('disclaimer')}
+                className={`flex-1 py-1.5 px-1.5 rounded-lg transition text-center cursor-pointer border-0 ${
+                  aboutTab === 'disclaimer'
+                    ? 'bg-[var(--bg2)] text-amber-400 shadow-sm border border-[var(--border2)]'
+                    : 'bg-transparent text-[var(--text3)] hover:text-[var(--text)]'
+                }`}
+              >
+                Disclaimer
+              </button>
+            </div>
+
+            {/* TAB 1: OVERVIEW */}
+            {aboutTab === 'overview' && (
+              <>
+                <div className="py-2 text-[12px] leading-relaxed text-[var(--text2)] border-b border-[var(--border)]">
+                  <p>
+                    Arch Pad Pro is purpose-built for architects, civil engineers, interior planners, and site contractors. 
+                    Draft instant conceptual blueprints, scale-accurate layout measurements, and CAD schematics with zero latency—both in the studio and directly on remote construction sites.
+                  </p>
+                </div>
+
+                {/* Key Engineering Capabilities */}
+                <div className="py-4 border-b border-[var(--border)]">
+                  <div className="text-[10px] font-mono uppercase tracking-[1.5px] text-[var(--text3)] mb-3">
+                    Key Engineering Capabilities
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="p-2.5 rounded-xl bg-[var(--bg3)]/60 border border-[var(--border)]">
+                      <div className="text-[14px] mb-1">📐</div>
+                      <div className="text-[11px] font-bold text-[var(--text)]">Vector Splines</div>
+                      <div className="text-[9.5px] text-[var(--text3)] leading-normal mt-0.5">
+                        Midpoint Bézier curve interpolation for smooth strokes.
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-[var(--bg3)]/60 border border-[var(--border)]">
+                      <div className="text-[14px] mb-1">📏</div>
+                      <div className="text-[11px] font-bold text-[var(--text)]">Calibrated Scales</div>
+                      <div className="text-[9.5px] text-[var(--text3)] leading-normal mt-0.5">
+                        Metric & Imperial architectural ratios (1:1 to 1:200, 1/4&quot;=1&apos;).
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-[var(--bg3)]/60 border border-[var(--border)]">
+                      <div className="text-[14px] mb-1">🔒</div>
+                      <div className="text-[11px] font-bold text-[var(--text)]">100% On-Device</div>
+                      <div className="text-[9.5px] text-[var(--text3)] leading-normal mt-0.5">
+                        Client-side IndexedDB storage with zero tracking telemetry.
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-[var(--bg3)]/60 border border-[var(--border)]">
+                      <div className="text-[14px] mb-1">💼</div>
+                      <div className="text-[11px] font-bold text-[var(--text)]">CAD Export Suite</div>
+                      <div className="text-[9.5px] text-[var(--text3)] leading-normal mt-0.5">
+                        3x HD Title-Block cards, PDF sheets & .archpad backups.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Publishing Credentials */}
+                <div className="py-3.5 border-b border-[var(--border)] text-[11px]">
+                  <div className="text-[10px] font-mono uppercase tracking-[1.5px] text-[var(--text3)] mb-2.5">
+                    Publishing & Verification Credentials
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-[var(--border)]/60">
+                    <span className="text-[var(--text3)] font-mono text-[10px]">Publisher Entity</span>
+                    <span className="font-semibold text-[var(--text)]">CodeTech App Store</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-[var(--border)]/60">
+                    <span className="text-[var(--text3)] font-mono text-[10px]">Lead Developer</span>
+                    <span className="font-semibold text-[var(--text)]">Sheth Sachin D</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-[var(--border)]/60">
+                    <span className="text-[var(--text3)] font-mono text-[10px]">Android Package ID</span>
+                    <span className="font-mono text-[10px] text-[#4f8ef7]">app.vercel.arch_pad_pro.twa</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-[var(--border)]/60">
+                    <span className="text-[var(--text3)] font-mono text-[10px]">Official Support</span>
+                    <a href="mailto:codetech.appstore@gmail.com" className="font-medium text-[#4f8ef7] hover:underline">
+                      codetech.appstore@gmail.com
+                    </a>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5">
+                    <span className="text-[var(--text3)] font-mono text-[10px]">Store Verification</span>
+                    <span className="font-semibold text-emerald-400 flex items-center gap-1">
+                      ✓ Indus / PhonePe Verified
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* TAB 2: CREDITS & CORE TECHNOLOGIES */}
+            {aboutTab === 'credits' && (
+              <div className="py-2">
+                <div className="text-[12px] leading-relaxed text-[var(--text2)] mb-3">
+                  Arch Pad Pro is built with high-performance web standards and engineering algorithms, engineered for sub-millisecond drawing response and 100% offline persistence.
+                </div>
+
+                <div className="text-[10px] font-mono uppercase tracking-[1.5px] text-[var(--text3)] mb-2.5">
+                  Core Technologies & Architecture
+                </div>
+
+                {/* Monochromatic Technical Badges Grid */}
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">⚛</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">React 19</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Declarative UI Engine</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">🔷</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">TypeScript 5</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Strict Type System</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">🎨</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Canvas 2D GPU</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Hardware Acceleration</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">📐</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Bézier Splines</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Quadratic Smoothing</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">🗄</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">IndexedDB API</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Sandboxed DB Buffer</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">📱</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Android TWA</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Standalone APK Bridge</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">≋</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Tailwind CSS</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Zero-Runtime Styling</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">⚡</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Vite Engine</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Rollup Production Build</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">⚙</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Service Worker</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">CacheStorage Precache</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">☁</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Firebase Auth</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Voluntary Cloud Sync</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Standards Compliance */}
+                <div className="mt-3.5 p-3 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] text-[11px]">
+                  <div className="text-[10px] font-mono uppercase tracking-[1px] text-[var(--text3)] mb-1">
+                    Engineering Standards Compliance
+                  </div>
+                  <div className="text-[var(--text2)] leading-relaxed">
+                    Compliant with <strong>ISO 216 / ANSI</strong> architectural ratio calibrations and <strong>Google Digital Asset Links</strong> specification for trusted web activities.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: VERSION HISTORY (CHANGELOG) */}
+            {aboutTab === 'changelog' && (
+              <div className="py-2 space-y-3">
+                <div className="text-[10px] font-mono uppercase tracking-[1.5px] text-[var(--text3)] mb-2">
+                  Chronological Release History
+                </div>
+
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-[#4f8ef7]/30">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-[12px] font-bold text-white">v2.0.0 (Production Release)</span>
+                    <span className="text-[9px] font-mono text-[#4f8ef7] px-1.5 py-0.5 rounded bg-[#4f8ef7]/10 font-bold">
+                      CURRENT
+                    </span>
+                  </div>
+                  <div className="text-[9.5px] font-mono text-[var(--text3)] mb-2">November 2026</div>
+                  <ul className="text-[11px] text-[var(--text2)] space-y-1 list-disc list-inside leading-relaxed">
+                    <li>Midpoint Quadratic Bézier curve smoothing for natural freehand pen strokes.</li>
+                    <li>Infinite drafting canvas workspace (eliminated boundary clipping).</li>
+                    <li>In-app expandable legal & privacy architecture (no external browser popouts).</li>
+                    <li>Indus Appstore & PhonePe Appstore dual-fingerprint Digital Asset Links.</li>
+                    <li>Monochrome-512 and maskable icon suite for Android 13+ themed icons.</li>
+                  </ul>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-[12px] font-bold text-[var(--text)]">v1.8.0</span>
+                    <span className="text-[9px] font-mono text-[var(--text3)]">Stable</span>
+                  </div>
+                  <div className="text-[9.5px] font-mono text-[var(--text3)] mb-2">October 2026</div>
+                  <ul className="text-[11px] text-[var(--text2)] space-y-1 list-disc list-inside leading-relaxed">
+                    <li>Multi-format CAD Title-Block export card stamping (3x HD).</li>
+                    <li>Architectural scale calibrations (1:1 to 1:200, 1/4&quot;=1&apos;).</li>
+                    <li>Android hardware back button gesture navigation.</li>
+                  </ul>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-[12px] font-bold text-[var(--text)]">v1.0.0</span>
+                    <span className="text-[9px] font-mono text-[var(--text3)]">Launch</span>
+                  </div>
+                  <div className="text-[9.5px] font-mono text-[var(--text3)] mb-2">September 2026</div>
+                  <ul className="text-[11px] text-[var(--text2)] space-y-1 list-disc list-inside leading-relaxed">
+                    <li>Initial release of CAD vector drafting engine and IndexedDB registry.</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: LEGAL DISCLAIMER */}
+            {aboutTab === 'disclaimer' && (
+              <div className="py-2 space-y-3.5 text-[11.5px] leading-[1.8] text-[var(--text2)]">
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-200">
+                  <div className="flex items-center gap-2 font-bold text-[12px] text-amber-300 mb-1">
+                    <span>⚠️</span>
+                    <span>Architectural & Structural Engineering Disclaimer</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-amber-200/90">
+                    Arch Pad Pro is designed as a conceptual drafting, planning, and preliminary dimensioning tool for creative and spatial design. All measurements, scale ratios, calculations, and architectural drawings produced with this application must be independently verified, certified, and stamped by a licensed architect or qualified structural engineer prior to physical building, structural fabrication, or statutory municipal permit submission.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] space-y-2">
+                  <div className="font-bold text-white text-[12px]">Warranty Limitation & &apos;As Is&apos; Provision</div>
+                  <p className="text-[11px] text-[var(--text3)] leading-relaxed">
+                    This software is provided on an &quot;as is&quot; and &quot;as available&quot; basis, without warranty of any kind, whether express, statutory, or implied, including but not limited to the implied warranties of merchantability, fitness for a particular architectural use, and non-infringement.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] space-y-2">
+                  <div className="font-bold text-white text-[12px]">User Intellectual Property Sovereignty</div>
+                  <p className="text-[11px] text-[var(--text3)] leading-relaxed">
+                    You retain 100% exclusive intellectual property, copyright, and commercial ownership over all blueprints, sketches, CAD stamp layouts, and vector notes authored within Arch Pad Pro. CodeTech App Store asserts zero ownership or licensing rights over your user-created content.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] space-y-2">
+                  <div className="font-bold text-white text-[12px]">Local Storage & Data Backup Responsibility</div>
+                  <p className="text-[11px] text-[var(--text3)] leading-relaxed">
+                    Sketches and workspace states are held in local client-side IndexedDB storage. CodeTech App Store cannot restore data lost due to device hardware damage, factory operating system resets, or browser storage wipes. Users are strongly urged to utilize the built-in &quot;.archpad&quot; backup utility on a regular schedule.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Actions */}
+            <div className="flex flex-col sm:flex-row gap-2 mt-4 pt-3 border-t border-[var(--border)]">
+              <button
+                onClick={() => {
+                  if (openModal) openModal('privacy-modal');
+                }}
+                className="flex-1 py-2.5 px-3 rounded-lg bg-[var(--bg3)] hover:bg-[var(--bg4)] text-[var(--text)] text-[11px] font-semibold transition border border-[var(--border)] cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                🔒 In-App Privacy & Legal
+              </button>
+              <button
+                onClick={() => {
+                  if (openModal) openModal('info-modal');
+                }}
+                className="flex-1 py-2.5 px-3 rounded-lg bg-[#4f8ef7]/15 hover:bg-[#4f8ef7]/25 text-[#4f8ef7] text-[11px] font-semibold transition border border-[#4f8ef7]/30 cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                ⚙ System Diagnostics
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* SYSTEM APP INFO MODAL - HARDWARE & CAD RUNTIME METRICS */}
+        {activeModal === 'info-modal' && (
+          <div className="modal bg-[var(--bg2)] border border-[var(--border2)] rounded-2xl p-6 max-w-[480px] w-[94vw] max-h-[88vh] overflow-y-auto transform transition-all duration-200 shadow-2xl">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 pb-4 border-b border-[var(--border)]">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-base text-[#4f8ef7]">⚙</span>
+                  <h2 className="text-[17px] font-bold text-white tracking-tight">System & Diagnostics</h2>
+                </div>
+                <div className="text-[10px] text-[var(--text3)] font-mono uppercase tracking-[1.5px] mt-1">
+                  CAD ENGINE RUNTIME & HARDWARE SPECIFICATIONS
+                </div>
+              </div>
+              <button
+                className="w-8 h-8 rounded-lg bg-[var(--bg3)] hover:bg-[var(--bg4)] flex items-center justify-center text-[var(--text3)] hover:text-white transition text-lg leading-none cursor-pointer border-0 shrink-0"
+                onClick={closeActiveModal}
+                title="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* In-Modal Navigation Tabs */}
+            <div className="flex p-1 bg-[var(--bg3)] rounded-xl border border-[var(--border)] my-3.5 text-[11px] font-semibold gap-1">
+              <button
+                onClick={() => setInfoTab('diagnostics')}
+                className={`flex-1 py-1.5 px-2 rounded-lg transition text-center cursor-pointer border-0 ${
+                  infoTab === 'diagnostics'
+                    ? 'bg-[var(--bg2)] text-white shadow-sm border border-[var(--border2)]'
+                    : 'bg-transparent text-[var(--text3)] hover:text-[var(--text)]'
+                }`}
+              >
+                Diagnostics
+              </button>
+              <button
+                onClick={() => setInfoTab('credits')}
+                className={`flex-1 py-1.5 px-2 rounded-lg transition text-center cursor-pointer border-0 ${
+                  infoTab === 'credits'
+                    ? 'bg-[var(--bg2)] text-[#4f8ef7] shadow-sm border border-[var(--border2)]'
+                    : 'bg-transparent text-[var(--text3)] hover:text-[var(--text)]'
+                }`}
+              >
+                Credits & Tech
+              </button>
+              <button
+                onClick={() => setInfoTab('governance')}
+                className={`flex-1 py-1.5 px-2 rounded-lg transition text-center cursor-pointer border-0 ${
+                  infoTab === 'governance'
+                    ? 'bg-[var(--bg2)] text-emerald-400 shadow-sm border border-[var(--border2)]'
+                    : 'bg-transparent text-[var(--text3)] hover:text-[var(--text)]'
+                }`}
+              >
+                Governance
+              </button>
+            </div>
+
+            {/* TAB 1: DIAGNOSTICS */}
+            {infoTab === 'diagnostics' && (
+              <>
+                {/* Quick Engine Status Strips */}
+                <div className="grid grid-cols-3 gap-2 py-2 border-b border-[var(--border)] text-center">
+                  <div className="p-2 rounded-lg bg-[#4f8ef7]/10 border border-[#4f8ef7]/20">
+                    <div className="text-[9px] font-mono uppercase text-[#4f8ef7] font-bold">Engine</div>
+                    <div className="text-[11px] font-semibold text-white mt-0.5">2D Canvas</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <div className="text-[9px] font-mono uppercase text-emerald-400 font-bold">Storage</div>
+                    <div className="text-[11px] font-semibold text-white mt-0.5">IndexedDB</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <div className="text-[9px] font-mono uppercase text-purple-400 font-bold">Runtime</div>
+                    <div className="text-[11px] font-semibold text-white mt-0.5">Standalone</div>
+                  </div>
+                </div>
+
+                {/* Workspace & Display Telemetry */}
+                <div className="py-3.5 border-b border-[var(--border)]">
+                  <div className="text-[10px] font-mono uppercase tracking-[1.5px] text-[var(--text3)] mb-2">
+                    Viewport & Display Geometry
+                  </div>
+                  <div className="space-y-1.5 text-[11px]">
+                    <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
+                      <span className="text-[var(--text3)] font-mono text-[10px]">Viewport Resolution</span>
+                      <span className="font-mono font-semibold text-[var(--text)] tabular-nums">{windowWidth} × {windowHeight} px</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
+                      <span className="text-[var(--text3)] font-mono text-[10px]">Device Pixel Ratio</span>
+                      <span className="font-mono font-semibold text-[var(--text)] tabular-nums">
+                        {(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1).toFixed(2)}x HiDPI
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
+                      <span className="text-[var(--text3)] font-mono text-[10px]">Active Architectural Scale</span>
+                      <span className="font-mono font-semibold text-[#4f8ef7]">{currentScale}</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-[var(--text3)] font-mono text-[10px]">Stroke Interpolation</span>
+                      <span className="font-semibold text-[var(--text)]">Quadratic Bézier Spline</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Storage & Local Persistence Telemetry */}
+                <div className="py-3.5 border-b border-[var(--border)]">
+                  <div className="text-[10px] font-mono uppercase tracking-[1.5px] text-[var(--text3)] mb-2">
+                    Storage & Sketch Registry
+                  </div>
+                  <div className="space-y-1.5 text-[11px]">
+                    <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
+                      <span className="text-[var(--text3)] font-mono text-[10px]">IndexedDB Cache Buffer</span>
+                      <span className="font-mono font-semibold text-[#4f8ef7] tabular-nums">{storageUsedInfo}</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
+                      <span className="text-[var(--text3)] font-mono text-[10px]">Total Registered Sketches</span>
+                      <span className="font-mono font-semibold text-[var(--text)] tabular-nums">{Object.keys(projects).length} Projects</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-[var(--text3)] font-mono text-[10px]">Active Canvas ID</span>
+                      <span className="font-semibold text-emerald-400 truncate max-w-[200px]" title={currentProject}>{currentProject}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Platform & Store Identification */}
+                <div className="py-3.5 text-[11px]">
+                  <div className="text-[10px] font-mono uppercase tracking-[1.5px] text-[var(--text3)] mb-2">
+                    Application & Store Parameters
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
+                      <span className="text-[var(--text3)] font-mono text-[10px]">App Version</span>
+                      <span className="font-mono font-semibold text-[var(--text)]">2.0.0 (Production)</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
+                      <span className="text-[var(--text3)] font-mono text-[10px]">Package ID</span>
+                      <span className="font-mono text-[10px] text-[var(--text2)]">app.vercel.arch_pad_pro.twa</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-[var(--text3)] font-mono text-[10px]">Publisher</span>
+                      <span className="font-semibold text-[var(--text)]">CodeTech App Store</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* TAB 2: CREDITS & TECH STACK */}
+            {infoTab === 'credits' && (
+              <div className="py-2">
+                <div className="text-[12px] leading-relaxed text-[var(--text2)] mb-3">
+                  Technical specification and core libraries powering Arch Pad Pro&apos;s real-time drafting workstation:
+                </div>
+
+                <div className="text-[10px] font-mono uppercase tracking-[1.5px] text-[var(--text3)] mb-2.5">
+                  Core Technologies & Architecture
+                </div>
+
+                {/* Monochromatic Technical Badges Grid */}
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">⚛</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">React 19</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Declarative UI Engine</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">🔷</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">TypeScript 5</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Strict Type System</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">🎨</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Canvas 2D GPU</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Hardware Acceleration</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">📐</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Bézier Splines</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Quadratic Smoothing</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">🗄</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">IndexedDB API</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Sandboxed DB Buffer</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">📱</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Android TWA</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Standalone APK Bridge</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">≋</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Tailwind CSS</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Zero-Runtime Styling</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">⚡</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Vite Engine</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Rollup Bundler</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">📡</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Service Worker</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Cache-First Offline PWA</div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
+                    <span className="font-mono text-[12px] text-white font-bold w-5 text-center">🔥</span>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">Firebase Auth</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Google Cloud Sync</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] text-[10.5px] text-[var(--text3)] font-mono leading-relaxed">
+                  <div className="text-[10px] text-white font-semibold uppercase mb-1">Architecture Compliance</div>
+                  <div>• ISO 216 / ANSI Drawing sheet aspect ratio standard</div>
+                  <div>• Google Digital Asset Links TWA verified: app.vercel.arch_pad_pro.twa</div>
+                  <div>• Indus Appstore / PhonePe developer certified package</div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: GOVERNANCE & LEGAL */}
+            {infoTab === 'governance' && (
+              <div className="py-2 space-y-3 text-[11.5px] leading-relaxed text-[var(--text2)]">
+                <div className="p-3.5 rounded-xl bg-[#141d2c] border border-[#4f8ef7]/25 text-[#c3d5f5] text-[11px] leading-relaxed">
+                  <strong>Data Sovereignty Assertion:</strong> Arch Pad Pro operates on a strict on-device data sovereignty model. Sketches, dimension calibrations, and project workspaces are processed locally in sandboxed IndexedDB storage without telemetry trackers or ad profilers.
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] space-y-1.5 text-[11px]">
+                  <div className="font-bold text-white text-[12px]">Publisher & Support</div>
+                  <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
+                    <span className="text-[var(--text3)] font-mono text-[10px]">Publisher Entity</span>
+                    <span className="font-semibold text-white">CodeTech App Store</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
+                    <span className="text-[var(--text3)] font-mono text-[10px]">Developer</span>
+                    <span className="font-semibold text-white">Sheth Sachin D</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-[var(--text3)] font-mono text-[10px]">Contact</span>
+                    <span className="font-semibold text-[#4f8ef7]">codetech.appstore@gmail.com</span>
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <button
+                    onClick={() => {
+                      if (openModal) openModal('privacy-modal');
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl bg-[#4f8ef7]/15 hover:bg-[#4f8ef7]/25 text-[#4f8ef7] text-[11.5px] font-bold transition border border-[#4f8ef7]/30 flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    🔒 Open In-App Privacy & Legal Center
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Footer Buttons */}
+            <div className="flex gap-2 mt-4 pt-2 border-t border-[var(--border)]">
+              <button
+                onClick={() => {
+                  if (openModal) openModal('export-modal');
+                }}
+                className="flex-1 py-2.5 px-3 rounded-lg bg-[var(--bg3)] hover:bg-[var(--bg4)] text-[var(--text)] text-[11px] font-semibold transition border border-[var(--border)] cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                💾 Export Full Backup
+              </button>
+              <button
+                onClick={closeActiveModal}
+                className="flex-1 py-2.5 px-3 rounded-lg bg-[#4f8ef7] hover:bg-[#3d7be6] text-white text-[11px] font-semibold transition cursor-pointer flex items-center justify-center"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* PRIVACY POLICY & IN-APP LEGAL CENTER - ZERO BROWSER EXPANSION */}
+        {activeModal === 'privacy-modal' && (
+          <div className="modal bg-[var(--bg2)] border border-[var(--border2)] rounded-2xl p-6 max-w-[500px] w-[94vw] max-h-[88vh] overflow-y-auto transform transition-all duration-200 shadow-2xl">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 pb-4 border-b border-[var(--border)]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-lg shrink-0">
+                  🛡
+                </div>
+                <div>
+                  <h2 className="text-[17px] font-bold text-white tracking-tight">Privacy & Legal Center</h2>
+                  <div className="text-[10px] text-[var(--text3)] font-mono uppercase tracking-[1px] mt-0.5">
+                    CODETECH APP STORE · IN-APP DATA GOVERNANCE
+                  </div>
+                </div>
+              </div>
+              <button
+                className="w-8 h-8 rounded-lg bg-[var(--bg3)] hover:bg-[var(--bg4)] flex items-center justify-center text-[var(--text3)] hover:text-white transition text-lg leading-none cursor-pointer border-0 shrink-0"
+                onClick={closeActiveModal}
+                title="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* In-App Tab Switcher */}
+            <div className="flex p-1 bg-[var(--bg3)] rounded-xl border border-[var(--border)] my-3.5 text-[11px] font-semibold">
+              <button
+                onClick={() => setPrivacyTab('privacy')}
+                className={`flex-1 py-1.5 px-2 rounded-lg transition text-center cursor-pointer border-0 ${
+                  privacyTab === 'privacy'
+                    ? 'bg-[var(--bg2)] text-white shadow-sm border border-[var(--border2)]'
+                    : 'bg-transparent text-[var(--text3)] hover:text-[var(--text)]'
+                }`}
+              >
+                Privacy Policy
+              </button>
+              <button
+                onClick={() => setPrivacyTab('disclaimer')}
+                className={`flex-1 py-1.5 px-2 rounded-lg transition text-center cursor-pointer border-0 ${
+                  privacyTab === 'disclaimer'
+                    ? 'bg-[var(--bg2)] text-amber-400 shadow-sm border border-[var(--border2)]'
+                    : 'bg-transparent text-[var(--text3)] hover:text-[var(--text)]'
+                }`}
+              >
+                Legal Disclaimer
+              </button>
+              <button
+                onClick={() => setPrivacyTab('terms')}
+                className={`flex-1 py-1.5 px-2 rounded-lg transition text-center cursor-pointer border-0 ${
+                  privacyTab === 'terms'
+                    ? 'bg-[var(--bg2)] text-white shadow-sm border border-[var(--border2)]'
+                    : 'bg-transparent text-[var(--text3)] hover:text-[var(--text)]'
+                }`}
+              >
+                Terms of Service
+              </button>
+            </div>
+
+            {/* TAB 1: PRIVACY POLICY */}
+            {privacyTab === 'privacy' && (
+              <div className="space-y-3">
+                {/* Core Trust Assertion Banner */}
+                <div className="p-3.5 rounded-xl bg-[#141d2c] border border-[#4f8ef7]/20 text-[11.5px] leading-relaxed text-[#c3d5f5]">
+                  <strong>Data Sovereignty Guarantee:</strong> Arch Pad Pro stores all blueprints, sketches, and dimension data strictly on your physical device. No telemetry, no background ad scripts, and no tracking cookies are transmitted.
+                </div>
+
+                {/* Four Concrete Privacy Commitments */}
+                <div className="space-y-2.5 my-3">
+                  <div className="p-3 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm">🔒</span>
+                      <span className="text-[11.5px] font-bold text-[var(--text)]">1. Local-Only Storage by Default</span>
+                    </div>
+                    <p className="text-[11px] text-[var(--text2)] leading-relaxed pl-6">
+                      Drawings, metadata, and canvas strokes are saved locally via browser/system IndexedDB sandboxed storage. You can sketch entirely offline with zero connectivity.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm">🚫</span>
+                      <span className="text-[11.5px] font-bold text-[var(--text)]">2. Zero Telemetry & Ad Tracking</span>
+                    </div>
+                    <p className="text-[11px] text-[var(--text2)] leading-relaxed pl-6">
+                      We do not embed third-party advertising SDKs, behavioral tracking pixels, or telemetry profilers. Your architectural ideas remain strictly your property.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm">☁</span>
+                      <span className="text-[11.5px] font-bold text-[var(--text)]">3. Optional Opt-In Cloud Synchronization</span>
+                    </div>
+                    <p className="text-[11px] text-[var(--text2)] leading-relaxed pl-6">
+                      Google Firestore synchronization is 100% voluntary. It is only initiated if you explicitly authenticate via Google Account to back up sketches across devices.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm">📁</span>
+                      <span className="text-[11.5px] font-bold text-[var(--text)]">4. Local Export & Direct File Rights</span>
+                    </div>
+                    <p className="text-[11px] text-[var(--text2)] leading-relaxed pl-6">
+                      When you export PNG, PDF, or .archpad backup files, the file is written directly to your device storage or invoked via the native Android sharing intent.
+                    </p>
+                  </div>
+                </div>
+
+                {/* IN-APP EXPANDABLE COMPLETE LEGAL POLICY ARTICLES (ZERO EXTERNAL BROWSER!) */}
+                <div className="pt-2">
+                  <button
+                    onClick={() => setExpandFullPolicy(!expandFullPolicy)}
+                    className="w-full py-2.5 px-3 rounded-xl bg-[#4f8ef7]/15 hover:bg-[#4f8ef7]/25 text-[#4f8ef7] text-[11.5px] font-bold transition border border-[#4f8ef7]/30 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{expandFullPolicy ? '▲ Collapse Policy Articles' : '▼ Expand Complete Legal Policy (In-App)'}</span>
+                    <span className="text-[10px] font-mono text-[#4f8ef7]/80">{expandFullPolicy ? 'Close' : 'Read Articles 01–07'}</span>
+                  </button>
+
+                  {expandFullPolicy && (
+                    <div className="mt-3 p-4 rounded-xl bg-[var(--bg3)]/40 border border-[var(--border)] space-y-3.5 text-[11px] leading-[1.75] text-[var(--text2)]">
+                      <div>
+                        <div className="font-bold text-white text-[12px] mb-1">01. Overview & Architecture</div>
+                        <p>
+                          Arch Pad Pro is engineered from the ground up as a standalone, offline-first CAD workstation. All drawing paths, measurements, and project metadata are committed locally to your device&apos;s sandboxed IndexedDB database. The app requires zero continuous connectivity to provide full sketching, editing, and exporting capabilities.
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="font-bold text-white text-[12px] mb-1">02. Information We Handle</div>
+                        <p>
+                          We do not collect personal identifiers, contact books, camera feeds, or location telemetry. All vector paths and layer calculations remain exclusively on your physical hardware. Optional Google Firebase authentication is utilized solely if you explicitly sign in to sync backups to your personal cloud collection.
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="font-bold text-white text-[12px] mb-1">03. Device Permissions & Purpose</div>
+                        <p>
+                          <strong>Internet:</strong> Used only for Digital Asset Links TWA verification and optional user-triggered Google Firestore sync.
+                          <br />
+                          <strong>Storage:</strong> Sandboxed client-side IndexedDB persistence for project files.
+                          <br />
+                          <strong>File Downloads:</strong> Invoked when you explicitly export high-definition presentation cards, PNGs, PDFs, or .archpad backups.
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="font-bold text-white text-[12px] mb-1">04. Third-Party Service Providers</div>
+                        <p>
+                          No data is traded with commercial brokers. Vercel Inc. delivers initial application shell distribution over TLS HTTPS. Google LLC provides optional Firebase authentication when initiated by the user.
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="font-bold text-white text-[12px] mb-1">05. Data Deletion Authority</div>
+                        <p>
+                          You retain full ownership of your data. Deleting any sketch in the app or tapping &quot;Clear Canvas&quot; permanently erases local records. Cloud copies in Firestore are deleted concurrently.
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="font-bold text-white text-[12px] mb-1">06. Child Privacy Compliance</div>
+                        <p>
+                          Arch Pad Pro complies with international standards, including COPPA, and does not knowingly collect data from children under 13.
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="font-bold text-white text-[12px] mb-1">07. Policy Updates & Contact</div>
+                        <p>
+                          Any regulatory revisions will be published within this app view. Questions can be directed to <strong>codetech.appstore@gmail.com</strong>.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Publisher Information */}
+                <div className="py-3 border-t border-[var(--border)] text-[11px]">
+                  <div className="flex justify-between items-center py-1.5 border-b border-[var(--border)]/60">
+                    <span className="text-[var(--text3)] font-mono text-[10px]">Publisher Entity</span>
+                    <span className="font-semibold text-[var(--text)]">CodeTech App Store</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-[var(--border)]/60">
+                    <span className="text-[var(--text3)] font-mono text-[10px]">Lead Developer</span>
+                    <span className="font-semibold text-[var(--text)]">Sheth Sachin D</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-[var(--border)]/60">
+                    <span className="text-[var(--text3)] font-mono text-[10px]">Support & Inquiries</span>
+                    <a href="mailto:codetech.appstore@gmail.com" className="font-semibold text-[#4f8ef7] hover:underline">
+                      codetech.appstore@gmail.com
+                    </a>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5">
+                    <span className="text-[var(--text3)] font-mono text-[10px]">Package ID</span>
+                    <span className="font-mono text-[10px] text-[var(--text2)]">app.vercel.arch_pad_pro.twa</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: LEGAL DISCLAIMER */}
+            {privacyTab === 'disclaimer' && (
+              <div className="py-1 space-y-3.5 text-[11.5px] leading-[1.8] text-[var(--text2)]">
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-200">
+                  <div className="flex items-center gap-2 font-bold text-[12px] text-amber-300 mb-1">
+                    <span>⚠️</span>
+                    <span>Architectural & Structural Engineering Disclaimer</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-amber-200/90">
+                    Arch Pad Pro is designed as a conceptual drafting, planning, and preliminary dimensioning tool for creative and spatial design. All measurements, scale ratios, calculations, and architectural drawings produced with this application must be independently verified, certified, and stamped by a licensed architect or qualified structural engineer prior to physical building, structural fabrication, or statutory municipal permit submission.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] space-y-2">
+                  <div className="font-bold text-white text-[12px]">Warranty Limitation & &apos;As Is&apos; Provision</div>
+                  <p className="text-[11px] text-[var(--text3)] leading-relaxed">
+                    This software is provided on an &quot;as is&quot; and &quot;as available&quot; basis, without warranty of any kind, whether express, statutory, or implied, including but not limited to the implied warranties of merchantability, fitness for a particular architectural use, and non-infringement. CodeTech App Store does not warrant that drawing operations will be uninterrupted, error-free, or compatible with all third-party CAD suites.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] space-y-2">
+                  <div className="font-bold text-white text-[12px]">User Intellectual Property Sovereignty</div>
+                  <p className="text-[11px] text-[var(--text3)] leading-relaxed">
+                    You retain 100% exclusive intellectual property, copyright, and commercial ownership over all blueprints, sketches, CAD stamp layouts, and vector notes authored within Arch Pad Pro. The software publisher asserts zero ownership or licensing rights over your user-created content.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] space-y-2">
+                  <div className="font-bold text-white text-[12px]">Local Storage & Data Backup Responsibility</div>
+                  <p className="text-[11px] text-[var(--text3)] leading-relaxed">
+                    Sketches and workspace states are held in local client-side IndexedDB storage. CodeTech App Store cannot restore data lost due to device hardware damage, factory operating system resets, or browser storage wipes. Users are strongly urged to utilize the built-in &quot;.archpad&quot; backup utility on a regular schedule.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: TERMS OF SERVICE */}
+            {privacyTab === 'terms' && (
+              <div className="py-1 space-y-3.5 text-[11.5px] leading-[1.75] text-[var(--text2)]">
+                <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)]">
+                  <div className="font-bold text-white text-[12px] mb-1">01. Permitted Use</div>
+                  <p className="text-[11px] text-[var(--text3)] leading-relaxed">
+                    Arch Pad Pro is licensed for professional, educational, and personal architectural CAD sketching, dimensioning, and conceptual drafting. You are permitted to export, publish, and commercially distribute drawings generated with the software.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)]">
+                  <div className="font-bold text-white text-[12px] mb-1">02. Software License</div>
+                  <p className="text-[11px] text-[var(--text3)] leading-relaxed">
+                    CodeTech App Store grants you a non-exclusive, personal, non-transferable license to execute Arch Pad Pro in standalone or web modes in accordance with these terms.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)]">
+                  <div className="font-bold text-white text-[12px] mb-1">03. Jurisdiction & Entity</div>
+                  <p className="text-[11px] text-[var(--text3)] leading-relaxed">
+                    These terms are governed by applicable software distribution regulations. For legal inquiries, contact <strong>codetech.appstore@gmail.com</strong>.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* In-App Close Action */}
+            <div className="mt-4 pt-3 border-t border-[var(--border)]">
+              <button
+                onClick={closeActiveModal}
+                className="w-full py-2.5 px-3 rounded-lg bg-[var(--bg3)] hover:bg-[var(--bg4)] text-[var(--text)] text-[11.5px] font-semibold transition border border-[var(--border)] cursor-pointer text-center"
+              >
+                Close Legal Center
+              </button>
             </div>
           </div>
         )}

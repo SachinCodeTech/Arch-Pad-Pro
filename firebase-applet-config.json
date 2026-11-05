@@ -6,5 +6,7 @@
   "firestoreDatabaseId": "ai-studio-4e7d327c-cc06-4177-9ad1-a68859a5a83f",
   "storageBucket": "linen-radius-9cf5x.firebasestorage.app",
   "messagingSenderId": "571988795288",
-  "measurementId": ""
+  "measurementId": "",
+  "oAuthClientId": "571988795288-rg1es0342c8f1stco97r6jb39jf3kcar.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
 }

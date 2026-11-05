@@ -425,17 +425,4 @@ body.light-mode .color-dot.active {
   transform: scale(1.15);
 }
 
-/* Real-time drafting status: Drawing area blinking feedback at exactly 1.24 seconds */
-@keyframes canvas-screen-blink {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.88;
-  }
-}
-
-.canvas-blink-effect {
-  animation: canvas-screen-blink 1.24s infinite ease-in-out;
-}
 
