@@ -48,6 +48,17 @@ body {
   height: 100%;
   overflow: hidden;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#canvas-wrap,
+#sketchCanvas,
+#gridCanvas {
+  touch-action: none;
+  overscroll-behavior: none;
 }
 
 /* Custom Styles from layout specification */

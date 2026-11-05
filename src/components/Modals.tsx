@@ -830,12 +830,26 @@ export default function Modals({
               </p>
             </div>
             <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] mt-3 last:border-none">
-              <span className="info-label text-[var(--text2)] font-mono text-[10px]">Data Sandbox</span>
-              <span className="info-val text-green-500 font-semibold">Strict Client-Only</span>
+              <span className="info-label text-[var(--text2)] font-mono text-[10px]">Developer</span>
+              <span className="info-val text-[var(--text)] font-semibold">Sheth Sachin D</span>
             </div>
             <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] last:border-none">
-              <span className="info-label text-[var(--text2)] font-mono text-[10px]">Secured Auth</span>
-              <span className="info-val text-[var(--text)] font-semibold">Firebase Google Auth</span>
+              <span className="info-label text-[var(--text2)] font-mono text-[10px]">Package</span>
+              <span className="info-val text-[var(--text2)] font-mono text-[10px]">app.vercel.arch_pad_pro.twa</span>
+            </div>
+            <div className="info-row flex justify-between items-center py-2 border-b border-[var(--border)] text-[11px] last:border-none">
+              <span className="info-label text-[var(--text2)] font-mono text-[10px]">Support</span>
+              <a href="mailto:drs52ss19@gmail.com" className="info-val text-[#4f8ef7] font-semibold text-[11px] hover:underline">drs52ss19@gmail.com</a>
+            </div>
+            <div className="mt-3 pt-2 text-center">
+              <a 
+                href="/privacy.html" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block text-[11px] font-mono text-[#4f8ef7] hover:underline"
+              >
+                View Full Web Privacy Policy →
+              </a>
             </div>
           </div>
         )}

@@ -36,6 +36,8 @@ const PRECACHE_ASSETS = [
   '/icons/monochrome-512.png',
   '/icons/monochrome-192.png',
   '/monochrome.svg',
+  '/privacy.html',
+  '/terms.html',
   '/screenshots/screenshot-desktop.png',
   '/screenshots/screenshot-mobile.png'
 ];

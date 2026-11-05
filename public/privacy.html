@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy – Arch Pad</title>
+    <meta name="description" content="Privacy Policy for Arch Pad architectural drafting application by CodeTech Solutions / Sheth Sachin D." />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <style>
+      :root {
+        --bg: #0c1016;
+        --card: #141923;
+        --border: rgba(255, 255, 255, 0.1);
+        --accent: #4f8ef7;
+        --text: #e8e8f0;
+        --text-muted: #9aa5b8;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        line-height: 1.65;
+        padding: 32px 16px 64px;
+      }
+      .container {
+        max-width: 760px;
+        margin: 0 auto;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 36px 28px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+      }
+      .logo {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+      }
+      h1 {
+        font-size: 24px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+      .subtitle {
+        font-size: 13px;
+        color: var(--accent);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      .badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+      .badge {
+        font-size: 11px;
+        background: rgba(79, 142, 247, 0.12);
+        color: var(--accent);
+        border: 1px solid rgba(79, 142, 247, 0.3);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 600;
+      }
+      h2 {
+        font-size: 17px;
+        font-weight: 600;
+        margin-top: 28px;
+        margin-bottom: 12px;
+        color: #ffffff;
+      }
+      p, li {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+      }
+      ul {
+        margin-left: 20px;
+        margin-bottom: 16px;
+      }
+      li {
+        margin-bottom: 6px;
+      }
+      strong {
+        color: var(--text);
+      }
+      .contact-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-top: 24px;
+      }
+      .contact-card a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .footer {
+        text-align: center;
+        margin-top: 36px;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      a.back-link {
+        display: inline-block;
+        margin-top: 20px;
+        font-size: 13px;
+        color: var(--accent);
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="/icon.svg" alt="Arch Pad Logo" class="logo" />
+        <div>
+          <h1>Privacy Policy</h1>
+          <div class="subtitle">ARCH PAD · ARCHITECTURAL CAD SKETCHBOOK</div>
+        </div>
+      </div>
+
+      <div class="badge-row">
+        <span class="badge">Application: Arch Pad</span>
+        <span class="badge">Package: app.vercel.arch_pad_pro.twa</span>
+        <span class="badge">Developer: Sheth Sachin D / CodeTech Solutions</span>
+        <span class="badge">Updated: November 2026</span>
+      </div>
+
+      <p>
+        Welcome to <strong>Arch Pad</strong>. This Privacy Policy informs you of our policies regarding the collection, use, and disclosure of personal data when you use our application and the choices you have associated with that data.
+      </p>
+
+      <h2>1. Overview & Offline-First Principles</h2>
+      <p>
+        Arch Pad is designed as an <strong>offline-first architectural drafting and CAD sketching tool</strong>. Your drawings, scale parameters, and blueprints are processed and stored locally on your device using client-side IndexedDB storage. You do not need to register an account or provide any personal details to sketch, export, or design plans.
+      </p>
+
+      <h2>2. Information We Collect and Receive</h2>
+      <ul>
+        <li><strong>Local Drawing Data:</strong> All vector and raster canvas strokes, measurements, and project metadata are saved strictly inside your browser's local sandbox storage (IndexedDB). We cannot view, access, or sell this data.</li>
+        <li><strong>Optional Google Authentication:</strong> If you intentionally choose to sign in with Google to synchronize your projects across devices, Firebase Authentication securely processes your email address and Google user identifier. No passwords are ever accessed or stored by us.</li>
+        <li><strong>Optional Cloud Storage:</strong> If you use cloud synchronization, your project drawings are saved in your private Google Cloud Firestore collection, accessible only when logged in with your authenticated credentials.</li>
+        <li><strong>Telemetry & Cookies:</strong> We do not use advertising identifiers, marketing trackers, or third-party behavioral cookies.</li>
+      </ul>
+
+      <h2>3. Device Permissions & How They Are Used</h2>
+      <ul>
+        <li><strong>Internet Access:</strong> Used exclusively to load remote cloud backups (when signed in) and verify Digital Asset Links for standalone Trusted Web Activity (TWA) execution.</li>
+        <li><strong>File Export / Downloads:</strong> Used when you explicitly choose to export your architectural sketch as a PNG, JPEG, PDF, or .voxpad backup file to your device storage or share it via the Android share sheet.</li>
+      </ul>
+
+      <h2>4. Data Sharing & Third-Party Services</h2>
+      <p>
+        We do not sell, rent, or trade your personal information or drawings. We interact with the following trusted service providers strictly to deliver core app functionality:
+      </p>
+      <ul>
+        <li><strong>Google Firebase (Google LLC):</strong> Provides secure authentication and cloud database synchronization when selected by the user. Governed by the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Google Privacy Policy</a>.</li>
+        <li><strong>Vercel Inc.:</strong> Delivers application hosting, static asset distribution, and SSL certificate encryption.</li>
+      </ul>
+
+      <h2>5. Data Retention and Deletion</h2>
+      <p>
+        You have total control over your data:
+      </p>
+      <ul>
+        <li><strong>Local Data:</strong> You can delete any project or clear all data instantly via the Projects Dashboard or "Clear Canvas" feature inside the app.</li>
+        <li><strong>Cloud Data:</strong> Deleting a project within the app automatically purges it from Google Firestore as well. If you would like all cloud account data purged, you can sign out or contact us at the email below.</li>
+      </ul>
+
+      <h2>6. Children's Privacy</h2>
+      <p>
+        Our service does not address anyone under the age of 13. We do not knowingly collect personally identifiable information from children under 13.
+      </p>
+
+      <h2>7. Changes to This Privacy Policy</h2>
+      <p>
+        We may update our Privacy Policy from time to time. Any changes will be posted on this page with an updated revision date.
+      </p>
+
+      <h2>8. Developer Contact Information</h2>
+      <div class="contact-card">
+        <p><strong>Developer:</strong> SHETH SACHIN D / CodeTech Solutions</p>
+        <p><strong>Package Name:</strong> app.vercel.arch_pad_pro.twa</p>
+        <p><strong>Support & Privacy Inquiries:</strong> <a href="mailto:drs52ss19@gmail.com">drs52ss19@gmail.com</a></p>
+        <p><strong>Application URL:</strong> <a href="https://arch-pad-pro.vercel.app">https://arch-pad-pro.vercel.app</a></p>
+      </div>
+
+      <a href="/" class="back-link">← Return to Arch Pad App</a>
+
+      <div class="footer">
+        © 2026 CodeTech Solutions · All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>

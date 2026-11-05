@@ -137,6 +137,53 @@ export default function App() {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
   }, []);
 
+  // Android hardware/gesture back navigation handler
+  const lastBackPressTime = useRef<number>(0);
+  useEffect(() => {
+    // Prime the history stack for native back-gesture capture
+    try {
+      window.history.replaceState({ app: 'archpad-root' }, '');
+      window.history.pushState({ app: 'archpad-active' }, '');
+    } catch (e) {}
+
+    const handlePopState = () => {
+      // 1. If modal is open, dismiss modal
+      if (activeModal) {
+        setActiveModal(null);
+        window.history.pushState({ app: 'archpad-active' }, '');
+        return;
+      }
+
+      // 2. If sidebar is open, close sidebar
+      if (sidebarOpen) {
+        setSidebarOpen(false);
+        window.history.pushState({ app: 'archpad-active' }, '');
+        return;
+      }
+
+      // 3. If text input modal is active, dismiss
+      if (textInputState.visible) {
+        setTextInputState({ visible: false, x: 0, y: 0, value: '' });
+        window.history.pushState({ app: 'archpad-active' }, '');
+        return;
+      }
+
+      // 4. Native Android double-back to exit UX
+      const now = Date.now();
+      if (now - lastBackPressTime.current < 2000) {
+        // Allow app exit
+        return;
+      } else {
+        lastBackPressTime.current = now;
+        showToast('Press Back again to exit Arch Pad', 'info');
+        window.history.pushState({ app: 'archpad-active' }, '');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [activeModal, sidebarOpen, textInputState.visible]);
+
   // Monitor connectivity: Use IndexedDB to sync local changes when network connection is restored
   useEffect(() => {
     const handleOnline = async () => {
