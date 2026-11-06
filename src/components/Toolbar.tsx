@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { ToolType, ThemeType, PEN_SIZES } from '../types';
+import { ToolType, ThemeType, PEN_SIZES, ArchSymbolType, PaperGridType } from '../types';
 
 interface ToolbarProps {
   currentTool: ToolType;
   setTool: (t: ToolType) => void;
+  currentSymbol: ArchSymbolType;
+  setSymbol: (s: ArchSymbolType) => void;
+  paperGrid: PaperGridType;
+  setPaperGrid: (g: PaperGridType) => void;
   pencilSize: number;
   setPencilSize: (s: number) => void;
   setPencilNamedColor: (name: 'light' | 'medium' | 'dark') => void;
@@ -25,11 +29,15 @@ interface ToolbarProps {
   setPanOffset: (offset: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => void;
 }
 
-type TabCategory = 'pen' | 'shapes' | 'actions' | 'view';
+type TabCategory = 'pen' | 'cad' | 'shapes' | 'actions' | 'view';
 
 export default function Toolbar({
   currentTool,
   setTool,
+  currentSymbol,
+  setSymbol,
+  paperGrid,
+  setPaperGrid,
   pencilSize,
   setPencilSize,
   setPencilNamedColor,
@@ -55,10 +63,20 @@ export default function Toolbar({
   const [paletteMode, setPaletteMode] = useState<'standard' | 'mono'>('standard');
   const sizeScrollRef = useRef<HTMLDivElement>(null);
 
+  const triggerHaptic = () => {
+    try {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(12);
+      }
+    } catch {}
+  };
+
   // Auto-switch tabs based on selected tool
   useEffect(() => {
     const shapeTools = ['line', 'rect', 'circle', 'arrow'];
-    if (shapeTools.includes(currentTool)) {
+    if (currentTool === 'dimension' || currentTool === 'symbol') {
+      setActiveCat('cad');
+    } else if (shapeTools.includes(currentTool)) {
       setActiveCat('shapes');
     } else if (['pen', 'eraser', 'text'].includes(currentTool)) {
       setActiveCat('pen');
@@ -88,20 +106,20 @@ export default function Toolbar({
   ];
 
   const togglePullup = () => {
+    triggerHaptic();
     setPullupOpen(!pullupOpen);
   };
 
   const handleSetColor = (c: string) => {
+    triggerHaptic();
     setPencilColor(c);
-    // If eraser active, toggle to pen when changing color
     if (currentTool === 'eraser') {
       setTool('pen');
     }
   };
 
-  // Find the closest PEN_SIZES index based on pencilSize width
   const findClosestSizeIndex = () => {
-    let closestIndex = 6; // default to index 6 (0.20mm)
+    let closestIndex = 6;
     let minDiff = Infinity;
     PEN_SIZES.forEach(([px], i) => {
       const diff = Math.abs(px - pencilSize);
@@ -117,7 +135,6 @@ export default function Toolbar({
   const currentSizeMM = PEN_SIZES[currentSizeIndex] ? PEN_SIZES[currentSizeIndex][1] : '0.20mm';
   const currentSizeDesc = PEN_SIZES[currentSizeIndex] ? PEN_SIZES[currentSizeIndex][2] : 'Technical Fine';
 
-  // Scroll active size into view when activeSize index changes or the drawer is opened without sliding the whole canvas viewport
   useEffect(() => {
     if (activeCat === 'pen' && sizeScrollRef.current) {
       const container = sizeScrollRef.current;
@@ -133,18 +150,17 @@ export default function Toolbar({
   }, [currentSizeIndex, activeCat]);
 
   const handleSetPencilSizeIndex = (idx: number) => {
+    triggerHaptic();
     if (idx < 0 || idx >= PEN_SIZES.length) return;
     const [pxValue] = PEN_SIZES[idx];
     setPencilSize(pxValue);
-    
-    // Auto-switch to pen if eraser was active
     if (currentTool === 'eraser') {
       setTool('pen');
     }
   };
 
-  // Function to toggle shapes back to 'pen' on duplicate click
   const handleSetShapeTool = (t: ToolType) => {
+    triggerHaptic();
     if (currentTool === t) {
       setTool('pen');
     } else {
@@ -152,10 +168,28 @@ export default function Toolbar({
     }
   };
 
-  // Detect which custom shade button should be active
   const isShadeActive = (col: string) => {
     return pencilColor.toLowerCase() === col.toLowerCase();
   };
+
+  const symbolsList: { id: ArchSymbolType; label: string; icon: string }[] = [
+    { id: 'north_arrow', label: 'North Arrow', icon: '🧭' },
+    { id: 'door_swing', label: 'Door 90°', icon: '🚪' },
+    { id: 'double_door', label: 'Double Door', icon: '🚪🚪' },
+    { id: 'window', label: 'Window Sill', icon: '🪟' },
+    { id: 'column_bubble', label: 'Grid Bubble', icon: '⭕' },
+    { id: 'level_datum', label: 'Level Datum', icon: '📐' },
+    { id: 'scale_bar', label: 'Scale Bar', icon: '📏' }
+  ];
+
+  const gridStylesList: { id: PaperGridType; label: string; icon: string }[] = [
+    { id: 'cad', label: 'CAD Grid', icon: '▦' },
+    { id: 'blueprint', label: 'Blueprint', icon: '🟦' },
+    { id: 'metric', label: 'Metric Graph', icon: '◫' },
+    { id: 'isometric', label: 'Isometric 30°', icon: '⬡' },
+    { id: 'dots', label: 'Dot Matrix', icon: '⁘' },
+    { id: 'plain', label: 'Plain Vellum', icon: '◻' }
+  ];
 
   return (
     <div id="toolbar-wrap" className="shrink-0 bg-[var(--bg2)] border-t border-[var(--border)] relative select-none z-[100]">
@@ -163,73 +197,85 @@ export default function Toolbar({
       <div
         id="pullup-panel"
         className={`absolute bottom-full left-0 right-0 bg-[var(--bg2)] border-t border-[var(--border2)] overflow-hidden transition-all duration-320 ease-out z-[50] ${
-          pullupOpen ? 'max-h-[70vh] open' : 'max-h-0'
+          pullupOpen ? 'max-h-[75vh] open' : 'max-h-0'
         }`}
       >
-        <div id="pullup-inner" className="p-[10px_12px_6px] max-h-[70vh] overflow-y-auto font-sans">
+        <div id="pullup-inner" className="p-[10px_12px_6px] max-h-[75vh] overflow-y-auto font-sans">
           {/* Category tabs */}
           <div className="cat-tabs">
             <div
-              className={`cat-tab ${
-                activeCat === 'pen' ? 'active' : ''
-              }`}
-              onClick={() => setActiveCat('pen')}
+              className={`cat-tab ${activeCat === 'pen' ? 'active' : ''}`}
+              onClick={() => {
+                triggerHaptic();
+                setActiveCat('pen');
+              }}
             >
               ✏ Pen
             </div>
             <div
-              className={`cat-tab ${
-                activeCat === 'shapes' ? 'active' : ''
-              }`}
-              onClick={() => setActiveCat('shapes')}
+              className={`cat-tab ${activeCat === 'cad' ? 'active' : ''}`}
+              onClick={() => {
+                triggerHaptic();
+                setActiveCat('cad');
+              }}
+            >
+              📐 CAD & Dim
+            </div>
+            <div
+              className={`cat-tab ${activeCat === 'shapes' ? 'active' : ''}`}
+              onClick={() => {
+                triggerHaptic();
+                setActiveCat('shapes');
+              }}
             >
               ◻ Shapes
             </div>
             <div
-              className={`cat-tab ${
-                activeCat === 'actions' ? 'active' : ''
-              }`}
-              onClick={() => setActiveCat('actions')}
+              className={`cat-tab ${activeCat === 'actions' ? 'active' : ''}`}
+              onClick={() => {
+                triggerHaptic();
+                setActiveCat('actions');
+              }}
             >
               ⚡ Actions
             </div>
             <div
-              className={`cat-tab ${
-                activeCat === 'view' ? 'active' : ''
-              }`}
-              onClick={() => setActiveCat('view')}
+              className={`cat-tab ${activeCat === 'view' ? 'active' : ''}`}
+              onClick={() => {
+                triggerHaptic();
+                setActiveCat('view');
+              }}
             >
               ◈ View
             </div>
           </div>
 
-          {/* Tab Categories */}
+          {/* TAB 1: PEN */}
           {activeCat === 'pen' && (
             <div className="cat-panel active flex flex-col items-center">
-              {/* TOOL ROW */}
               <div className="tb-row">
                 <span className="tb-label font-mono text-[9px] text-[var(--text2)] tracking-[0.5px] font-[600] mr-1 uppercase">TOOL</span>
                 <button
-                  className={`tb-btn ${
-                    currentTool === 'pen' ? 'active' : ''
-                  }`}
-                  onClick={() => setTool('pen')}
+                  className={`tb-btn ${currentTool === 'pen' ? 'active' : ''}`}
+                  onClick={() => {
+                    triggerHaptic();
+                    setTool('pen');
+                  }}
                 >
                   ✏ Pen
                 </button>
                 <button
-                  className={`tb-btn ${
-                    currentTool === 'eraser' ? 'eraser-active active' : ''
-                  }`}
+                  className={`tb-btn ${currentTool === 'eraser' ? 'eraser-active active' : ''}`}
                   onClick={() => handleSetShapeTool('eraser')}
                 >
                   ⌫ Erase
                 </button>
                 <button
-                  className={`tb-btn ${
-                    currentTool === 'text' ? 'active' : ''
-                  }`}
-                  onClick={() => setTool('text')}
+                  className={`tb-btn ${currentTool === 'text' ? 'active' : ''}`}
+                  onClick={() => {
+                    triggerHaptic();
+                    setTool('text');
+                  }}
                 >
                   𝐀 Text
                 </button>
@@ -241,6 +287,7 @@ export default function Toolbar({
                 <button
                   className={`tb-btn shade-btn ${isShadeActive('#bbbbbb') ? 'active' : ''}`}
                   onClick={() => {
+                    triggerHaptic();
                     setPencilNamedColor('light');
                     if (currentTool === 'eraser') setTool('pen');
                   }}
@@ -251,6 +298,7 @@ export default function Toolbar({
                 <button
                   className={`tb-btn shade-btn ${isShadeActive('#555555') ? 'active' : ''}`}
                   onClick={() => {
+                    triggerHaptic();
                     setPencilNamedColor('medium');
                     if (currentTool === 'eraser') setTool('pen');
                   }}
@@ -261,6 +309,7 @@ export default function Toolbar({
                 <button
                   className={`tb-btn shade-btn ${isShadeActive('#111111') ? 'active' : ''}`}
                   onClick={() => {
+                    triggerHaptic();
                     setPencilNamedColor('dark');
                     if (currentTool === 'eraser') setTool('pen');
                   }}
@@ -270,7 +319,7 @@ export default function Toolbar({
                 </button>
               </div>
 
-              {/* THICKNESS ROW (NIB) */}
+              {/* NIB THICKNESS ROW */}
               <div className="thickness-wrap">
                 <div className="thickness-header flex items-center gap-[6px] mb-[6px]">
                   <span className="tb-label font-mono text-[9px] text-[var(--text2)] tracking-[0.5px] font-[600] uppercase">✒ NIB</span>
@@ -278,11 +327,7 @@ export default function Toolbar({
                     {currentSizeMM} · {currentSizeDesc}
                   </span>
                 </div>
-                <div
-                  id="size-scroll"
-                  ref={sizeScrollRef}
-                  className="w-full"
-                >
+                <div id="size-scroll" ref={sizeScrollRef} className="w-full">
                   {PEN_SIZES.map(([pxValue, mmLabel, desc_label], idx) => (
                     <button
                       key={idx}
@@ -306,37 +351,100 @@ export default function Toolbar({
             </div>
           )}
 
+          {/* TAB 2: CAD & DIMENSIONS (ARCHITECTURAL WORKSTATION SUITE) */}
+          {activeCat === 'cad' && (
+            <div className="cat-panel active flex flex-col items-center">
+              {/* PRIMARY CAD TOOL ROW */}
+              <div className="tb-row">
+                <button
+                  className={`tb-btn ${currentTool === 'dimension' ? 'active bg-[#4f8ef7]/20 border border-[#4f8ef7]' : ''}`}
+                  onClick={() => {
+                    triggerHaptic();
+                    setTool('dimension');
+                  }}
+                >
+                  ⤢ CAD Dimension Line
+                </button>
+                <button
+                  className={`tb-btn ${currentTool === 'symbol' ? 'active bg-[#4f8ef7]/20 border border-[#4f8ef7]' : ''}`}
+                  onClick={() => {
+                    triggerHaptic();
+                    setTool('symbol');
+                  }}
+                >
+                  🧭 Stamp Symbol
+                </button>
+                {currentTool !== 'pen' && (
+                  <button
+                    className="tb-btn text-[var(--accent)] font-semibold"
+                    onClick={() => {
+                      triggerHaptic();
+                      setTool('pen');
+                    }}
+                  >
+                    ✏ Pen
+                  </button>
+                )}
+              </div>
+
+              {/* ARCHITECTURAL SYMBOLS PALETTE */}
+              <div className="w-full border-t border-[var(--border)] pt-2 mt-2">
+                <div className="text-[9px] font-mono text-[var(--text3)] uppercase tracking-wider text-center mb-1.5">
+                  ARCHITECTURAL STAMPS LIBRARY
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  {symbolsList.map((sym) => (
+                    <button
+                      key={sym.id}
+                      className={`tb-btn text-[11px] flex items-center gap-1.5 py-1 px-2.5 rounded-lg border transition ${
+                        currentTool === 'symbol' && currentSymbol === sym.id
+                          ? 'bg-[#4f8ef7]/25 border-[#4f8ef7] text-white font-semibold'
+                          : 'border-[var(--border)] text-[var(--text2)] hover:bg-[var(--bg3)]'
+                      }`}
+                      onClick={() => {
+                        triggerHaptic();
+                        setSymbol(sym.id);
+                        setTool('symbol');
+                      }}
+                    >
+                      <span>{sym.icon}</span>
+                      <span>{sym.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="text-[8px] font-mono text-center text-[var(--text3)] mt-1.5 opacity-70">
+                  {currentTool === 'dimension'
+                    ? 'DRAG BETWEEN TWO POINTS TO MEASURE & CREATE CAD DIMENSION'
+                    : 'TAP ON CANVAS TO PLACE SELECTED ARCHITECTURAL STAMP'}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: SHAPES */}
           {activeCat === 'shapes' && (
             <div className="cat-panel active flex flex-col items-center">
               <div className="tb-row">
                 <button
-                  className={`tb-btn ${
-                    currentTool === 'line' ? 'tool-shape-active active' : ''
-                  }`}
+                  className={`tb-btn ${currentTool === 'line' ? 'tool-shape-active active' : ''}`}
                   onClick={() => handleSetShapeTool('line')}
                 >
                   ╱ Line
                 </button>
                 <button
-                  className={`tb-btn ${
-                    currentTool === 'rect' ? 'tool-shape-active active' : ''
-                  }`}
+                  className={`tb-btn ${currentTool === 'rect' ? 'tool-shape-active active' : ''}`}
                   onClick={() => handleSetShapeTool('rect')}
                 >
                   ▭ Rect
                 </button>
                 <button
-                  className={`tb-btn ${
-                    currentTool === 'circle' ? 'tool-shape-active active' : ''
-                  }`}
+                  className={`tb-btn ${currentTool === 'circle' ? 'tool-shape-active active' : ''}`}
                   onClick={() => handleSetShapeTool('circle')}
                 >
                   ○ Circle
                 </button>
                 <button
-                  className={`tb-btn ${
-                    currentTool === 'arrow' ? 'tool-shape-active active' : ''
-                  }`}
+                  className={`tb-btn ${currentTool === 'arrow' ? 'tool-shape-active active' : ''}`}
                   onClick={() => handleSetShapeTool('arrow')}
                 >
                   ➜ Arrow
@@ -346,7 +454,10 @@ export default function Toolbar({
                     <div className="tb-sep w-[1px] h-[20px] bg-[var(--border2)] mx-1" />
                     <button
                       className="tb-btn bg-gradient-to-r from-[#4f8ef7]/15 to-[#7c5cf7]/15 border-[#4f8ef7] text-[#4f8ef7] font-[700]"
-                      onClick={() => setTool('pen')}
+                      onClick={() => {
+                        triggerHaptic();
+                        setTool('pen');
+                      }}
                     >
                       ✏ Draw
                     </button>
@@ -361,44 +472,63 @@ export default function Toolbar({
             </div>
           )}
 
+          {/* TAB 4: ACTIONS */}
           {activeCat === 'actions' && (
             <div className="cat-panel active flex flex-col items-center">
               <div className="tb-row">
                 <button
                   className="tb-btn"
-                  onClick={undo}
+                  onClick={() => {
+                    triggerHaptic();
+                    undo();
+                  }}
                 >
                   ↩ Undo
                 </button>
                 <button
                   className="tb-btn"
-                  onClick={redo}
+                  onClick={() => {
+                    triggerHaptic();
+                    redo();
+                  }}
                 >
                   ↪ Redo
                 </button>
                 <div className="tb-sep w-[1px] h-[20px] bg-[var(--border2)] mx-1" />
                 <button
                   className="tb-btn success"
-                  onClick={onSave}
+                  onClick={() => {
+                    triggerHaptic();
+                    onSave();
+                  }}
                 >
                   💾 Save
                 </button>
                 <button
                   className="tb-btn"
-                  onClick={() => openModal('export-modal')}
+                  onClick={() => {
+                    triggerHaptic();
+                    openModal('export-modal');
+                  }}
                 >
                   ⤓ Export
                 </button>
                 <button
                   className="tb-btn"
-                  onClick={onShare}
+                  onClick={() => {
+                    triggerHaptic();
+                    onShare();
+                  }}
                 >
                   ⤴ Share
                 </button>
                 <div className="tb-sep w-[1px] h-[20px] bg-[var(--border2)] mx-1" />
                 <button
                   className="tb-btn danger"
-                  onClick={onClear}
+                  onClick={() => {
+                    triggerHaptic();
+                    onClear();
+                  }}
                 >
                   ✕ Clear
                 </button>
@@ -406,47 +536,83 @@ export default function Toolbar({
             </div>
           )}
 
+          {/* TAB 5: VIEW & PAPER GRIDS */}
           {activeCat === 'view' && (
             <div className="cat-panel active flex flex-col items-center">
               <div className="tb-row">
                 <button
-                  className={`tb-btn ${
-                    gridVisible ? 'active' : ''
-                  }`}
-                  onClick={toggleGrid}
+                  className={`tb-btn ${gridVisible ? 'active' : ''}`}
+                  onClick={() => {
+                    triggerHaptic();
+                    toggleGrid();
+                  }}
                 >
-                  ⊞ Grid
+                  ⊞ Grid: {gridVisible ? 'ON' : 'OFF'}
                 </button>
                 <button
                   className="tb-btn"
-                  onClick={() => openModal('scale-modal')}
+                  onClick={() => {
+                    triggerHaptic();
+                    openModal('scale-modal');
+                  }}
                 >
                   ⊟ Scale
                 </button>
                 <div className="tb-sep w-[1px] h-[20px] bg-[var(--border2)] mx-1" />
                 <button
                   className="tb-btn"
-                  onClick={onFullscreen}
+                  onClick={() => {
+                    triggerHaptic();
+                    onFullscreen();
+                  }}
                 >
                   ⛶ Fullscreen
                 </button>
-                <div className="tb-sep w-[1px] h-[20px] bg-[var(--border2)] mx-1" />
                 <button
-                  className={`tb-btn ${
-                    theme === 'light' ? 'active' : ''
-                  }`}
-                  onClick={() => setTheme('light')}
+                  className={`tb-btn ${theme === 'light' ? 'active' : ''}`}
+                  onClick={() => {
+                    triggerHaptic();
+                    setTheme('light');
+                  }}
                 >
                   ☀ Light
                 </button>
                 <button
-                  className={`tb-btn ${
-                    theme === 'dark' ? 'active' : ''
-                  }`}
-                  onClick={() => setTheme('dark')}
+                  className={`tb-btn ${theme === 'dark' ? 'active' : ''}`}
+                  onClick={() => {
+                    triggerHaptic();
+                    setTheme('dark');
+                  }}
                 >
                   ◗ Dark
                 </button>
+              </div>
+
+              {/* ARCHITECTURAL PAPER GRID STYLES */}
+              <div className="w-full border-t border-[var(--border)] pt-2 mt-2">
+                <div className="text-[9px] font-mono text-[var(--text3)] uppercase tracking-wider text-center mb-1.5">
+                  ARCHITECTURAL DRAFTING PAPER STYLE
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  {gridStylesList.map((g) => (
+                    <button
+                      key={g.id}
+                      className={`tb-btn text-[11px] py-1 px-2.5 rounded-lg border transition flex items-center gap-1.5 ${
+                        paperGrid === g.id
+                          ? 'bg-[#4f8ef7]/25 border-[#4f8ef7] text-white font-semibold'
+                          : 'border-[var(--border)] text-[var(--text2)] hover:bg-[var(--bg3)]'
+                      }`}
+                      onClick={() => {
+                        triggerHaptic();
+                        setPaperGrid(g.id);
+                        if (!gridVisible) toggleGrid();
+                      }}
+                    >
+                      <span>{g.icon}</span>
+                      <span>{g.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -458,28 +624,26 @@ export default function Toolbar({
         id="pullup-handle"
         className="flex items-center justify-center gap-4 p-[4px_12px_4px] select-none border-b-0 border-t border-[var(--border)] bg-[var(--bg2)]"
       >
-        {/* Toggle drawer control: pointer carets acting as ^ Tool and v Tool */}
         <div
           title={pullupOpen ? 'Close Tools Panel' : 'Open Tools Panel'}
           className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition py-1"
           onClick={togglePullup}
         >
           <span className="handle-label text-[var(--accent)] font-sans text-[11px] tracking-[0.5px] font-[900] uppercase select-none flex items-center gap-1">
-            {pullupOpen ? 'v Tool' : '^ Tool'}
+            {pullupOpen ? 'v CAD Tools' : '^ CAD Tools'}
           </span>
         </div>
 
-        {/* Separator Pipe | */}
         <span className="text-[var(--text3)] opacity-40 font-mono text-[11px] select-none mx-0.5">|</span>
 
-        {/* Floating Zoom / Pan Controls right of Tool: +  -  🖐️ */}
+        {/* Floating Zoom / Pan Controls */}
         <div className="flex items-center gap-2">
-          {/* Zoom In button */}
           <button
             title="Zoom In"
             type="button"
             onClick={(e) => {
               e.stopPropagation();
+              triggerHaptic();
               const oldZoom = zoom;
               const newZoom = Math.min(Math.round((oldZoom + 0.15) * 100) / 100, 3.0);
               if (newZoom === oldZoom) return;
@@ -500,12 +664,12 @@ export default function Toolbar({
             {Math.round(zoom * 100)}%
           </span>
 
-          {/* Zoom Out button */}
           <button
             title="Zoom Out"
             type="button"
             onClick={(e) => {
               e.stopPropagation();
+              triggerHaptic();
               const oldZoom = zoom;
               const newZoom = Math.max(Math.round((oldZoom - 0.15) * 100) / 100, 0.4);
               if (newZoom === oldZoom) return;
@@ -522,15 +686,14 @@ export default function Toolbar({
             －
           </button>
 
-          {/* Mini Separator */}
           <span className="text-[var(--text3)] opacity-40 font-mono text-[11px] select-none mx-0.5">|</span>
 
-          {/* Pan hand button 🖐️ */}
           <button
             title="Pan Workspace"
             type="button"
             onClick={(e) => {
               e.stopPropagation();
+              triggerHaptic();
               setTool(currentTool === 'pan' ? 'pen' : 'pan');
             }}
             className={`w-[22px] h-[22px] flex items-center justify-center text-[11px] rounded-[4px] transition cursor-pointer ${
@@ -549,7 +712,10 @@ export default function Toolbar({
         <button
           id="palette-toggle"
           className="bg-[var(--bg3)] border border-[var(--border2)] text-[var(--text)] font-mono text-[8px] font-[700] p-[4px_6px] rounded-[6px] cursor-pointer tracking-[0.5px] whitespace-nowrap outline-none hover:opacity-90 active:scale-[0.96] transition font-bold"
-          onClick={() => setPaletteMode((prev) => (prev === 'standard' ? 'mono' : 'standard'))}
+          onClick={() => {
+            triggerHaptic();
+            setPaletteMode((prev) => (prev === 'standard' ? 'mono' : 'standard'));
+          }}
           style={{
             color: paletteMode === 'mono' ? 'var(--accent)' : 'var(--text)',
             borderColor: paletteMode === 'mono' ? 'var(--accent)' : 'var(--border2)'
@@ -558,7 +724,6 @@ export default function Toolbar({
           {paletteMode === 'mono' ? 'MONO' : 'STD'}
         </button>
 
-        {/* Selected Palette Mode */}
         {paletteMode === 'standard' ? (
           <div id="palette-standard" className="palette-set flex items-center gap-[12px] flex-wrap">
             {standardColors.map((color) => (
@@ -589,7 +754,6 @@ export default function Toolbar({
           </div>
         )}
 
-        {/* Custom hex HTML5 color picker */}
         <input
           type="color"
           id="custom-color"

@@ -755,7 +755,7 @@ export default function Modals({
                     Architectural CAD & Drafting Sketchbook
                   </div>
                   <div className="text-[9px] text-[var(--text3)] font-mono mt-1">
-                    Standalone TWA · Offline-First Engine
+                    Native Android Edition · Offline-First CAD Engine
                   </div>
                 </div>
               </div>
@@ -846,7 +846,7 @@ export default function Modals({
                       <div className="text-[14px] mb-1">🔒</div>
                       <div className="text-[11px] font-bold text-[var(--text)]">100% On-Device</div>
                       <div className="text-[9.5px] text-[var(--text3)] leading-normal mt-0.5">
-                        Client-side IndexedDB storage with zero tracking telemetry.
+                        Sandboxed local storage with zero tracking telemetry.
                       </div>
                     </div>
                     <div className="p-2.5 rounded-xl bg-[var(--bg3)]/60 border border-[var(--border)]">
@@ -940,16 +940,16 @@ export default function Modals({
                   <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
                     <span className="font-mono text-[12px] text-white font-bold w-5 text-center">🗄</span>
                     <div>
-                      <div className="font-semibold text-white text-[11px]">IndexedDB API</div>
-                      <div className="text-[9px] text-[var(--text3)] font-mono">Sandboxed DB Buffer</div>
+                      <div className="font-semibold text-white text-[11px]">CAD Storage Engine</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Encrypted Device Buffer</div>
                     </div>
                   </div>
 
                   <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
                     <span className="font-mono text-[12px] text-white font-bold w-5 text-center">📱</span>
                     <div>
-                      <div className="font-semibold text-white text-[11px]">Android TWA</div>
-                      <div className="text-[9px] text-[var(--text3)] font-mono">Standalone APK Bridge</div>
+                      <div className="font-semibold text-white text-[11px]">Android CAD Edition</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Standalone Architecture</div>
                     </div>
                   </div>
 
@@ -992,7 +992,7 @@ export default function Modals({
                     Engineering Standards Compliance
                   </div>
                   <div className="text-[var(--text2)] leading-relaxed">
-                    Compliant with <strong>ISO 216 / ANSI</strong> architectural ratio calibrations and <strong>Google Digital Asset Links</strong> specification for trusted web activities.
+                    Compliant with <strong>ISO 216 / ANSI</strong> architectural drawing standard ratios and official <strong>Indus Appstore</strong> certified application parameters.
                   </div>
                 </div>
               </div>
@@ -1014,11 +1014,11 @@ export default function Modals({
                   </div>
                   <div className="text-[9.5px] font-mono text-[var(--text3)] mb-2">November 2026</div>
                   <ul className="text-[11px] text-[var(--text2)] space-y-1 list-disc list-inside leading-relaxed">
-                    <li>Midpoint Quadratic Bézier curve smoothing for natural freehand pen strokes.</li>
-                    <li>Infinite drafting canvas workspace (eliminated boundary clipping).</li>
-                    <li>In-app expandable legal & privacy architecture (no external browser popouts).</li>
-                    <li>Indus Appstore & PhonePe Appstore dual-fingerprint Digital Asset Links.</li>
-                    <li>Monochrome-512 and maskable icon suite for Android 13+ themed icons.</li>
+                    <li>Integrated real-world CAD Dimensioning tool with calibrated ratio measurements.</li>
+                    <li>Added Architectural CAD Symbols Library (North Arrow, Doors, Windows, Grids).</li>
+                    <li>Architectural drafting paper presets (Blueprint, Metric, Isometric 30°, Dot Matrix).</li>
+                    <li>Midpoint Quadratic Bézier curve smoothing for natural pencil strokes.</li>
+                    <li>Pre-loaded architectural sample blueprints for instant CAD exploration.</li>
                   </ul>
                 </div>
 
@@ -1042,7 +1042,7 @@ export default function Modals({
                   </div>
                   <div className="text-[9.5px] font-mono text-[var(--text3)] mb-2">September 2026</div>
                   <ul className="text-[11px] text-[var(--text2)] space-y-1 list-disc list-inside leading-relaxed">
-                    <li>Initial release of CAD vector drafting engine and IndexedDB registry.</li>
+                    <li>Initial release of CAD vector drafting engine and sandboxed on-device database.</li>
                   </ul>
                 </div>
               </div>
@@ -1078,7 +1078,7 @@ export default function Modals({
                 <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] space-y-2">
                   <div className="font-bold text-white text-[12px]">Local Storage & Data Backup Responsibility</div>
                   <p className="text-[11px] text-[var(--text3)] leading-relaxed">
-                    Sketches and workspace states are held in local client-side IndexedDB storage. CodeTech App Store cannot restore data lost due to device hardware damage, factory operating system resets, or browser storage wipes. Users are strongly urged to utilize the built-in &quot;.archpad&quot; backup utility on a regular schedule.
+                    Sketches and workspace states are held in sandboxed on-device database storage. CodeTech App Store cannot restore data lost due to device hardware damage, factory operating system resets, or application uninstalls. Users are strongly urged to utilize the built-in &quot;.archpad&quot; backup utility on a regular schedule.
                   </p>
                 </div>
               </div>
@@ -1174,11 +1174,11 @@ export default function Modals({
                   </div>
                   <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                     <div className="text-[9px] font-mono uppercase text-emerald-400 font-bold">Storage</div>
-                    <div className="text-[11px] font-semibold text-white mt-0.5">IndexedDB</div>
+                    <div className="text-[11px] font-semibold text-white mt-0.5">Encrypted CAD</div>
                   </div>
                   <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
                     <div className="text-[9px] font-mono uppercase text-purple-400 font-bold">Runtime</div>
-                    <div className="text-[11px] font-semibold text-white mt-0.5">Standalone</div>
+                    <div className="text-[11px] font-semibold text-white mt-0.5">Standalone CAD</div>
                   </div>
                 </div>
 
@@ -1216,7 +1216,7 @@ export default function Modals({
                   </div>
                   <div className="space-y-1.5 text-[11px]">
                     <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
-                      <span className="text-[var(--text3)] font-mono text-[10px]">IndexedDB Cache Buffer</span>
+                      <span className="text-[var(--text3)] font-mono text-[10px]">Local CAD Storage Buffer</span>
                       <span className="font-mono font-semibold text-[#4f8ef7] tabular-nums">{storageUsedInfo}</span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
@@ -1301,16 +1301,16 @@ export default function Modals({
                   <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
                     <span className="font-mono text-[12px] text-white font-bold w-5 text-center">🗄</span>
                     <div>
-                      <div className="font-semibold text-white text-[11px]">IndexedDB API</div>
-                      <div className="text-[9px] text-[var(--text3)] font-mono">Sandboxed DB Buffer</div>
+                      <div className="font-semibold text-white text-[11px]">CAD Storage Engine</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Encrypted Device Buffer</div>
                     </div>
                   </div>
 
                   <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
                     <span className="font-mono text-[12px] text-white font-bold w-5 text-center">📱</span>
                     <div>
-                      <div className="font-semibold text-white text-[11px]">Android TWA</div>
-                      <div className="text-[9px] text-[var(--text3)] font-mono">Standalone APK Bridge</div>
+                      <div className="font-semibold text-white text-[11px]">Android CAD Edition</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Standalone Architecture</div>
                     </div>
                   </div>
 
@@ -1333,15 +1333,15 @@ export default function Modals({
                   <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
                     <span className="font-mono text-[12px] text-white font-bold w-5 text-center">📡</span>
                     <div>
-                      <div className="font-semibold text-white text-[11px]">Service Worker</div>
-                      <div className="text-[9px] text-[var(--text3)] font-mono">Cache-First Offline PWA</div>
+                      <div className="font-semibold text-white text-[11px]">Offline Cache</div>
+                      <div className="text-[9px] text-[var(--text3)] font-mono">Pre-Cached Shell</div>
                     </div>
                   </div>
 
                   <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition flex items-center gap-2.5">
                     <span className="font-mono text-[12px] text-white font-bold w-5 text-center">🔥</span>
                     <div>
-                      <div className="font-semibold text-white text-[11px]">Firebase Auth</div>
+                      <div className="font-semibold text-white text-[11px]">Firebase Cloud</div>
                       <div className="text-[9px] text-[var(--text3)] font-mono">Google Cloud Sync</div>
                     </div>
                   </div>
@@ -1350,7 +1350,7 @@ export default function Modals({
                 <div className="mt-4 p-3 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] text-[10.5px] text-[var(--text3)] font-mono leading-relaxed">
                   <div className="text-[10px] text-white font-semibold uppercase mb-1">Architecture Compliance</div>
                   <div>• ISO 216 / ANSI Drawing sheet aspect ratio standard</div>
-                  <div>• Google Digital Asset Links TWA verified: app.vercel.arch_pad_pro.twa</div>
+                  <div>• Certified Android Package: app.vercel.arch_pad_pro.twa</div>
                   <div>• Indus Appstore / PhonePe developer certified package</div>
                 </div>
               </div>
@@ -1360,7 +1360,7 @@ export default function Modals({
             {infoTab === 'governance' && (
               <div className="py-2 space-y-3 text-[11.5px] leading-relaxed text-[var(--text2)]">
                 <div className="p-3.5 rounded-xl bg-[#141d2c] border border-[#4f8ef7]/25 text-[#c3d5f5] text-[11px] leading-relaxed">
-                  <strong>Data Sovereignty Assertion:</strong> Arch Pad Pro operates on a strict on-device data sovereignty model. Sketches, dimension calibrations, and project workspaces are processed locally in sandboxed IndexedDB storage without telemetry trackers or ad profilers.
+                  <strong>Data Sovereignty Assertion:</strong> Arch Pad Pro operates on a strict on-device data sovereignty model. Sketches, dimension calibrations, and project workspaces are processed locally in sandboxed storage without telemetry trackers or ad profilers.
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] space-y-1.5 text-[11px]">
@@ -1487,7 +1487,7 @@ export default function Modals({
                       <span className="text-[11.5px] font-bold text-[var(--text)]">1. Local-Only Storage by Default</span>
                     </div>
                     <p className="text-[11px] text-[var(--text2)] leading-relaxed pl-6">
-                      Drawings, metadata, and canvas strokes are saved locally via browser/system IndexedDB sandboxed storage. You can sketch entirely offline with zero connectivity.
+                      Drawings, metadata, and canvas strokes are saved locally via on-device isolated sandboxed storage. You can sketch entirely offline with zero connectivity.
                     </p>
                   </div>
 
@@ -1507,7 +1507,7 @@ export default function Modals({
                       <span className="text-[11.5px] font-bold text-[var(--text)]">3. Optional Opt-In Cloud Synchronization</span>
                     </div>
                     <p className="text-[11px] text-[var(--text2)] leading-relaxed pl-6">
-                      Google Firestore synchronization is 100% voluntary. It is only initiated if you explicitly authenticate via Google Account to back up sketches across devices.
+                      Google Cloud synchronization is 100% voluntary. It is only initiated if you explicitly authenticate via Google Account to back up sketches across devices.
                     </p>
                   </div>
 
@@ -1537,7 +1537,7 @@ export default function Modals({
                       <div>
                         <div className="font-bold text-white text-[12px] mb-1">01. Overview & Architecture</div>
                         <p>
-                          Arch Pad Pro is engineered from the ground up as a standalone, offline-first CAD workstation. All drawing paths, measurements, and project metadata are committed locally to your device&apos;s sandboxed IndexedDB database. The app requires zero continuous connectivity to provide full sketching, editing, and exporting capabilities.
+                          Arch Pad Pro is engineered from the ground up as a standalone, offline-first CAD workstation. All drawing paths, measurements, and project metadata are committed locally to your device&apos;s sandboxed storage. The app requires zero continuous connectivity to provide full sketching, editing, and exporting capabilities.
                         </p>
                       </div>
 
@@ -1551,9 +1551,9 @@ export default function Modals({
                       <div>
                         <div className="font-bold text-white text-[12px] mb-1">03. Device Permissions & Purpose</div>
                         <p>
-                          <strong>Internet:</strong> Used only for Digital Asset Links TWA verification and optional user-triggered Google Firestore sync.
+                          <strong>Internet:</strong> Used only for optional user-triggered Google Cloud backup sync.
                           <br />
-                          <strong>Storage:</strong> Sandboxed client-side IndexedDB persistence for project files.
+                          <strong>Storage:</strong> Sandboxed client-side local CAD persistence for project files.
                           <br />
                           <strong>File Downloads:</strong> Invoked when you explicitly export high-definition presentation cards, PNGs, PDFs, or .archpad backups.
                         </p>
@@ -1644,7 +1644,7 @@ export default function Modals({
                 <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] space-y-2">
                   <div className="font-bold text-white text-[12px]">Local Storage & Data Backup Responsibility</div>
                   <p className="text-[11px] text-[var(--text3)] leading-relaxed">
-                    Sketches and workspace states are held in local client-side IndexedDB storage. CodeTech App Store cannot restore data lost due to device hardware damage, factory operating system resets, or browser storage wipes. Users are strongly urged to utilize the built-in &quot;.archpad&quot; backup utility on a regular schedule.
+                    Sketches and workspace states are stored locally on your device. CodeTech App Store cannot restore data lost due to device hardware damage, factory operating system resets, or browser storage wipes. Users are strongly urged to utilize the built-in &quot;.archpad&quot; backup utility on a regular schedule.
                   </p>
                 </div>
               </div>
