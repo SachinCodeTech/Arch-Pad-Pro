@@ -274,7 +274,35 @@ export default function App() {
   useEffect(() => {
     const fetchLocal = async () => {
       try {
-        const loadedProjects = await getLocalProjects();
+        const sample1: Project = {
+          id: 'proj_villa_residence',
+          name: 'Villa Residence (1:50)',
+          created: Date.now() - 86400000 * 2,
+          modified: Date.now(),
+          scale: '1:50'
+        };
+        const sample2: Project = {
+          id: 'proj_structural_grid',
+          name: 'Column Grid Layout (1:100)',
+          created: Date.now() - 86400000,
+          modified: Date.now(),
+          scale: '1:100'
+        };
+        const sample3: Project = {
+          id: 'proj_south_elevation',
+          name: 'South Facade Elevation (1:100)',
+          created: Date.now(),
+          modified: Date.now(),
+          scale: '1:100'
+        };
+
+        let loadedProjects: Project[] = [];
+        try {
+          loadedProjects = await getLocalProjects();
+        } catch (dbErr) {
+          console.warn('Initial IndexedDB read error (self-healing):', dbErr);
+        }
+
         const normalized: Record<string, Project> = {};
         
         // If projects empty or missing blueprints, seed full CAD blueprint collection
@@ -283,40 +311,6 @@ export default function App() {
           !loadedProjects.some((p) => p.name === 'Villa Residence (1:50)');
           
         if (needsSeed) {
-          const sample1: Project = {
-            id: 'proj_villa_residence',
-            name: 'Villa Residence (1:50)',
-            created: Date.now() - 86400000 * 2,
-            modified: Date.now(),
-            scale: '1:50'
-          };
-          const sample2: Project = {
-            id: 'proj_structural_grid',
-            name: 'Column Grid Layout (1:100)',
-            created: Date.now() - 86400000,
-            modified: Date.now(),
-            scale: '1:100'
-          };
-          const sample3: Project = {
-            id: 'proj_south_elevation',
-            name: 'South Facade Elevation (1:100)',
-            created: Date.now(),
-            modified: Date.now(),
-            scale: '1:100'
-          };
-
-          await saveLocalProject(sample1);
-          await saveLocalProject(sample2);
-          await saveLocalProject(sample3);
-
-          const data1 = createSampleBlueprintDataUrl('villa', 3200, 2400, false);
-          const data2 = createSampleBlueprintDataUrl('structural', 3200, 2400, false);
-          const data3 = createSampleBlueprintDataUrl('elevation', 3200, 2400, false);
-
-          await saveLocalDrawing(sample1.id, data1);
-          await saveLocalDrawing(sample2.id, data2);
-          await saveLocalDrawing(sample3.id, data3);
-
           normalized[sample1.name] = sample1;
           normalized[sample2.name] = sample2;
           normalized[sample3.name] = sample3;
@@ -326,18 +320,45 @@ export default function App() {
           });
           setProjects(normalized);
           setCurrentProject(sample1.name);
-          localStorage.setItem('voxpad_current', sample1.name);
+          try {
+            localStorage.setItem('voxpad_current', sample1.name);
+          } catch {}
+
+          // Background persist to IndexedDB with resilient error protection
+          (async () => {
+            try {
+              await saveLocalProject(sample1);
+              await saveLocalProject(sample2);
+              await saveLocalProject(sample3);
+
+              const data1 = createSampleBlueprintDataUrl('villa', 3200, 2400, false);
+              const data2 = createSampleBlueprintDataUrl('structural', 3200, 2400, false);
+              const data3 = createSampleBlueprintDataUrl('elevation', 3200, 2400, false);
+
+              await saveLocalDrawing(sample1.id, data1);
+              await saveLocalDrawing(sample2.id, data2);
+              await saveLocalDrawing(sample3.id, data3);
+            } catch (persistErr) {
+              console.warn('Background seed persist error:', persistErr);
+            }
+          })();
         } else {
           loadedProjects.forEach((p) => {
             normalized[p.name] = p;
           });
           setProjects(normalized);
-          const lastUsed = localStorage.getItem('voxpad_current') || loadedProjects[0].name;
+          let lastUsed = sample1.name;
+          try {
+            lastUsed = localStorage.getItem('voxpad_current') || loadedProjects[0].name;
+          } catch {}
           setCurrentProject(normalized[lastUsed] ? lastUsed : loadedProjects[0].name);
         }
 
         // Load Theme settings
-        const loadedTheme = (localStorage.getItem('voxpad_theme') as ThemeType) || 'dark';
+        let loadedTheme: ThemeType = 'dark';
+        try {
+          loadedTheme = (localStorage.getItem('voxpad_theme') as ThemeType) || 'dark';
+        } catch {}
         setTheme(loadedTheme);
 
         // Service Worker dynamic registration
@@ -348,6 +369,18 @@ export default function App() {
         }
       } catch (err) {
         console.error('Error opening local database stores:', err);
+        // Guaranteed fallback in-memory seed even if IndexedDB is entirely unavailable
+        const fallbackProjects: Record<string, Project> = {
+          'Villa Residence (1:50)': {
+            id: 'proj_villa_residence',
+            name: 'Villa Residence (1:50)',
+            created: Date.now(),
+            modified: Date.now(),
+            scale: '1:50'
+          }
+        };
+        setProjects(fallbackProjects);
+        setCurrentProject('Villa Residence (1:50)');
       }
     };
     fetchLocal();
@@ -826,7 +859,8 @@ export default function App() {
     if (currentTool === 'pen' || currentTool === 'eraser') {
       const isEraser = currentTool === 'eraser';
       const bgHex = theme === 'light' ? '#ffffff' : '#fafaf8';
-      const markRadius = Math.max(0.6, (isEraser ? pencilSize * 1.5 : pencilSize * 0.5) * pressure);
+      // Zoom-compensated radius so stroke thickness matches user selection on screen regardless of zoom
+      const markRadius = Math.max(0.6 / zoom, (isEraser ? (pencilSize * 1.5) / zoom : (pencilSize * 0.5) / zoom) * pressure);
 
       // Imprint dot on backing canvas right at contact point
       oCtx.save();
@@ -927,7 +961,8 @@ export default function App() {
 
         const midX = (lastPoint.current.x + pt.x) / 2;
         const midY = (lastPoint.current.y + pt.y) / 2;
-        const strokeW = Math.max(0.75, (isEraser ? pencilSize * 3 : pencilSize) * pt.pressure);
+        // World stroke width compensated by zoom factor for crisp screen reproduction
+        const strokeW = Math.max(0.75 / zoom, (isEraser ? (pencilSize * 3) / zoom : pencilSize / zoom) * pt.pressure);
 
         oCtx.beginPath();
         oCtx.lineWidth = strokeW;
@@ -963,7 +998,8 @@ export default function App() {
           const screenStartY = startPoints.current.y * zoom + panOffset.y;
           const screenEndX = x * zoom + panOffset.x;
           const screenEndY = y * zoom + panOffset.y;
-          drawVectorShape(ctx, currentTool, screenStartX, screenStartY, screenEndX, screenEndY, pencilSize * zoom);
+          // Live preview is drawn directly in screen coordinates, so lineWidth is pencilSize
+          drawVectorShape(ctx, currentTool, screenStartX, screenStartY, screenEndX, screenEndY, pencilSize);
         }
       }
     }
@@ -1005,7 +1041,7 @@ export default function App() {
         oCtx.beginPath();
         oCtx.moveTo(lastMidPoint.current.x, lastMidPoint.current.y);
         oCtx.lineTo(lastPoint.current.x, lastPoint.current.y);
-        oCtx.lineWidth = isEraser ? pencilSize * 3 : pencilSize;
+        oCtx.lineWidth = Math.max(0.75 / zoom, (isEraser ? pencilSize * 3 : pencilSize) / zoom);
         oCtx.lineCap = 'round';
         oCtx.lineJoin = 'round';
         oCtx.strokeStyle = isEraser ? bgHex : pencilColor;
@@ -1018,7 +1054,8 @@ export default function App() {
     } else {
       const { x, y } = getPointerCoords(e);
       if (previewData.current) {
-        drawVectorShape(oCtx, currentTool, startPoints.current.x, startPoints.current.y, x, y);
+        // Pass pencilSize / zoom so world shape width displays at exact selected pencilSize on screen
+        drawVectorShape(oCtx, currentTool, startPoints.current.x, startPoints.current.y, x, y, pencilSize / zoom);
         previewData.current = null;
         redrawVisibleCanvas();
         takeSnapSnapshot();

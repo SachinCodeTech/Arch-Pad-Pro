@@ -15,54 +15,74 @@ export function getDB(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
 
   dbPromise = new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    if (typeof indexedDB === 'undefined') {
+      dbPromise = null;
+      return reject(new Error('IndexedDB not supported'));
+    }
 
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      
-      // Create projects store
-      if (!db.objectStoreNames.contains('projects')) {
-        db.createObjectStore('projects', { keyPath: 'id' });
-      }
+    try {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-      // Create drawings store
-      if (!db.objectStoreNames.contains('drawings')) {
-        db.createObjectStore('drawings', { keyPath: 'projectId' });
-      }
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        
+        // Create projects store
+        if (!db.objectStoreNames.contains('projects')) {
+          db.createObjectStore('projects', { keyPath: 'id' });
+        }
 
-      // Create sync_queue store for offline changes
-      if (!db.objectStoreNames.contains('sync_queue')) {
-        db.createObjectStore('sync_queue', { keyPath: 'id' });
-      }
-    };
+        // Create drawings store
+        if (!db.objectStoreNames.contains('drawings')) {
+          db.createObjectStore('drawings', { keyPath: 'projectId' });
+        }
 
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
+        // Create sync_queue store for offline changes
+        if (!db.objectStoreNames.contains('sync_queue')) {
+          db.createObjectStore('sync_queue', { keyPath: 'id' });
+        }
+      };
 
-    request.onerror = () => {
-      reject(request.error);
-    };
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+
+      request.onerror = () => {
+        dbPromise = null; // Reset so subsequent calls can retry
+        reject(request.error);
+      };
+
+      request.onblocked = () => {
+        dbPromise = null;
+      };
+    } catch (e) {
+      dbPromise = null;
+      reject(e);
+    }
   });
 
   return dbPromise;
 }
 
 export async function getLocalProjects(): Promise<Project[]> {
-  const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('projects', 'readonly');
-    const store = tx.objectStore('projects');
-    const request = store.getAll();
+  try {
+    const db = await getDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction('projects', 'readonly');
+      const store = tx.objectStore('projects');
+      const request = store.getAll();
 
-    request.onsuccess = () => {
-      resolve(request.result || []);
-    };
+      request.onsuccess = () => {
+        resolve(request.result || []);
+      };
 
-    request.onerror = () => {
-      reject(request.error);
-    };
-  });
+      request.onerror = () => {
+        resolve([]);
+      };
+    });
+  } catch (err) {
+    dbPromise = null;
+    return [];
+  }
 }
 
 export async function saveLocalProject(project: Project): Promise<void> {
@@ -133,20 +153,25 @@ export async function deleteLocalProject(id: string): Promise<void> {
 }
 
 export async function getLocalDrawing(projectId: string): Promise<string> {
-  const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('drawings', 'readonly');
-    const store = tx.objectStore('drawings');
-    const request = store.get(projectId);
+  try {
+    const db = await getDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction('drawings', 'readonly');
+      const store = tx.objectStore('drawings');
+      const request = store.get(projectId);
 
-    request.onsuccess = () => {
-      resolve(request.result?.canvasData || '');
-    };
+      request.onsuccess = () => {
+        resolve(request.result?.canvasData || '');
+      };
 
-    request.onerror = () => {
-      reject(request.error);
-    };
-  });
+      request.onerror = () => {
+        resolve('');
+      };
+    });
+  } catch (err) {
+    dbPromise = null;
+    return '';
+  }
 }
 
 export async function saveLocalDrawing(projectId: string, canvasData: string): Promise<void> {

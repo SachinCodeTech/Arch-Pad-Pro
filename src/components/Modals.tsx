@@ -720,7 +720,7 @@ export default function Modals({
               </div>
             </div>
 
-            {/* Direct Import Concept for PWA standalone */}
+            {/* Direct Import Backup File */}
             <div className="mt-4 pt-3 border-t border-[var(--border)]">
               <label className="block text-center text-[10px] font-mono text-[var(--text2)] cursor-pointer hover:text-[#4f8ef7] transition">
                 📂 Import Backup (.archpad / .voxpad)
