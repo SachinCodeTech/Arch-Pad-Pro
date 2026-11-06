@@ -277,9 +277,10 @@ export default function App() {
         const loadedProjects = await getLocalProjects();
         const normalized: Record<string, Project> = {};
         
-        // If projects empty or only initial empty placeholder, seed full CAD blueprint collection
+        // If projects empty or missing blueprints, seed full CAD blueprint collection
         const needsSeed = loadedProjects.length === 0 || 
-          (loadedProjects.length === 1 && loadedProjects[0].name === 'Sketch 1');
+          (loadedProjects.length === 1 && loadedProjects[0].name === 'Sketch 1') ||
+          !loadedProjects.some((p) => p.name === 'Villa Residence (1:50)');
           
         if (needsSeed) {
           const sample1: Project = {
@@ -308,9 +309,9 @@ export default function App() {
           await saveLocalProject(sample2);
           await saveLocalProject(sample3);
 
-          const data1 = createSampleBlueprintDataUrl('villa', 3200, 2400, true);
-          const data2 = createSampleBlueprintDataUrl('structural', 3200, 2400, true);
-          const data3 = createSampleBlueprintDataUrl('elevation', 3200, 2400, true);
+          const data1 = createSampleBlueprintDataUrl('villa', 3200, 2400, false);
+          const data2 = createSampleBlueprintDataUrl('structural', 3200, 2400, false);
+          const data3 = createSampleBlueprintDataUrl('elevation', 3200, 2400, false);
 
           await saveLocalDrawing(sample1.id, data1);
           await saveLocalDrawing(sample2.id, data2);
@@ -319,6 +320,10 @@ export default function App() {
           normalized[sample1.name] = sample1;
           normalized[sample2.name] = sample2;
           normalized[sample3.name] = sample3;
+          // preserve any custom user projects
+          loadedProjects.forEach((p) => {
+            if (p.name !== 'Sketch 1') normalized[p.name] = p;
+          });
           setProjects(normalized);
           setCurrentProject(sample1.name);
           localStorage.setItem('voxpad_current', sample1.name);
@@ -395,7 +400,7 @@ export default function App() {
     if (appReady) {
       loadSelectedProjectDrawing();
     }
-  }, [currentProject, appReady]);
+  }, [currentProject, projects, appReady]);
 
   const initOffscreenCanvas = () => {
     if (!offscreenCanvasRef.current) {
@@ -404,7 +409,7 @@ export default function App() {
       offscreenCanvasRef.current.height = 2400;
       const oCtx = offscreenCanvasRef.current.getContext('2d');
       if (oCtx) {
-        oCtx.fillStyle = theme === 'light' ? '#ffffff' : '#fafaf8';
+        oCtx.fillStyle = '#ffffff';
         oCtx.fillRect(0, 0, 3200, 2400);
       }
     }
@@ -417,8 +422,7 @@ export default function App() {
     if (!ctx) return;
 
     // Seamless full-screen architectural paper workspace (no borders, no cutoff corners)
-    const paperBg = theme === 'light' ? '#ffffff' : '#fafaf8';
-    ctx.fillStyle = paperBg;
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();
@@ -440,17 +444,35 @@ export default function App() {
     const oCtx = oCanvas.getContext('2d');
     if (!oCtx) return;
 
-    // Reset offscreen to solid white/light background
-    oCtx.fillStyle = theme === 'light' ? '#ffffff' : '#fafaf8';
+    // Reset offscreen to solid clean paper canvas
+    oCtx.fillStyle = '#ffffff';
     oCtx.fillRect(0, 0, oCanvas.width, oCanvas.height);
 
     setHistory([]);
     setHistoryIndex(-1);
 
-    const matchProj = projects[currentProject];
+    let matchProj = projects[currentProject];
+    if (!matchProj) {
+      const allLocal = await getLocalProjects();
+      matchProj = allLocal.find((p) => p.name === currentProject || p.id === currentProject);
+    }
+
     if (matchProj) {
       setScale(matchProj.scale);
-      const cached = await getLocalDrawing(matchProj.id);
+      let cached = await getLocalDrawing(matchProj.id);
+      if (!cached) {
+        if (matchProj.id === 'proj_villa_residence' || matchProj.name.includes('Villa')) {
+          cached = createSampleBlueprintDataUrl('villa', 3200, 2400, false);
+          await saveLocalDrawing(matchProj.id, cached);
+        } else if (matchProj.id === 'proj_structural_grid' || matchProj.name.includes('Column')) {
+          cached = createSampleBlueprintDataUrl('structural', 3200, 2400, false);
+          await saveLocalDrawing(matchProj.id, cached);
+        } else if (matchProj.id === 'proj_south_elevation' || matchProj.name.includes('Elevation')) {
+          cached = createSampleBlueprintDataUrl('elevation', 3200, 2400, false);
+          await saveLocalDrawing(matchProj.id, cached);
+        }
+      }
+
       if (cached) {
         const img = new Image();
         img.onload = () => {
