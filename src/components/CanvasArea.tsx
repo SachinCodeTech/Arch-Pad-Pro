@@ -342,10 +342,28 @@ export default function CanvasArea({
       {/* Mode Badge Indicator */}
       <div
         id="mode-badge"
-        className="canvas-mode-badge absolute top-2 left-2 bg-[#0a0a0f]/80 backdrop-blur-[8px] border border-[var(--border)] rounded-[6px] font-mono text-[9px] text-[var(--text)] p-[3px_8px] pointer-events-none tracking-[0.5px] uppercase z-40"
+        onClick={() => {
+          if (currentTool === 'pan') setTool('pen');
+        }}
+        className={`canvas-mode-badge absolute top-2 left-2 bg-[#0a0a0f]/80 backdrop-blur-[8px] border border-[var(--border)] rounded-[6px] font-mono text-[9px] p-[3px_8px] tracking-[0.5px] uppercase z-40 transition ${
+          currentTool === 'pan'
+            ? 'pointer-events-auto cursor-pointer border-[#4f8ef7] text-[#4f8ef7] hover:bg-[#4f8ef7]/20 active:scale-95'
+            : 'pointer-events-none text-[var(--text)]'
+        }`}
       >
-        {getBadgeText()}
+        {currentTool === 'pan' ? '🖐️ PAN MODE (TAP TO DRAW)' : getBadgeText()}
       </div>
+
+      {/* Floating Quick Return to Drawing Button when Pan Mode is Active */}
+      {currentTool === 'pan' && (
+        <button
+          onClick={() => setTool('pen')}
+          className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#4f8ef7] hover:bg-[#3d7be0] text-white font-mono text-[10px] font-bold py-1 px-3.5 rounded-full shadow-lg z-50 flex items-center gap-1.5 cursor-pointer transition active:scale-95"
+        >
+          <span>✏️</span>
+          <span>Return to Draw</span>
+        </button>
+      )}
 
       {/* Scale Badge Indicator */}
       <div

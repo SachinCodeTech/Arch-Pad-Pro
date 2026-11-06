@@ -682,9 +682,8 @@ export function createSampleBlueprintDataUrl(
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
 
-  // Background
-  ctx.fillStyle = isDark ? '#0c1016' : '#ffffff';
-  ctx.fillRect(0, 0, width, height);
+  // Transparent drawing layer for seamless infinite paper canvas
+  ctx.clearRect(0, 0, width, height);
 
   if (type === 'villa') {
     drawVillaFloorPlan(ctx, width, height, isDark);

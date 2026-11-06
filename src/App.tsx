@@ -409,8 +409,7 @@ export default function App() {
       offscreenCanvasRef.current.height = 2400;
       const oCtx = offscreenCanvasRef.current.getContext('2d');
       if (oCtx) {
-        oCtx.fillStyle = '#ffffff';
-        oCtx.fillRect(0, 0, 3200, 2400);
+        oCtx.clearRect(0, 0, 3200, 2400);
       }
     }
   };
@@ -444,9 +443,8 @@ export default function App() {
     const oCtx = oCanvas.getContext('2d');
     if (!oCtx) return;
 
-    // Reset offscreen to solid clean paper canvas
-    oCtx.fillStyle = '#ffffff';
-    oCtx.fillRect(0, 0, oCanvas.width, oCanvas.height);
+    // Reset offscreen to clean transparent layer (infinite seamless paper)
+    oCtx.clearRect(0, 0, oCanvas.width, oCanvas.height);
 
     setHistory([]);
     setHistoryIndex(-1);
@@ -1367,8 +1365,7 @@ export default function App() {
       const oCtx = oCanvas.getContext('2d');
       if (oCtx) {
         takeSnapSnapshot();
-        oCtx.fillStyle = theme === 'light' ? '#ffffff' : '#fafaf8';
-        oCtx.fillRect(0, 0, oCanvas.width, oCanvas.height);
+        oCtx.clearRect(0, 0, oCanvas.width, oCanvas.height);
         redrawVisibleCanvas();
         showToast('Draft space cleared');
         triggerQuickAutoSaveDelay();
@@ -1452,6 +1449,9 @@ export default function App() {
     if (name === currentProject) return;
     await handleSilentAutoSave(); // Save current project first
 
+    setPanOffset({ x: 0, y: 0 });
+    setZoom(1.0);
+    setTool('pen');
     setCurrentProject(name);
     localStorage.setItem('voxpad_current', name);
     showToast(`Loaded "${name}" Successfully!`, 'success');
@@ -1479,6 +1479,9 @@ export default function App() {
       [name]: newProj
     }));
 
+    setPanOffset({ x: 0, y: 0 });
+    setZoom(1.0);
+    setTool('pen');
     setCurrentProject(name);
     localStorage.setItem('voxpad_current', name);
     showToast(`Created Project "${name}"`, 'success');
@@ -1707,31 +1710,45 @@ export default function App() {
     }
   };
 
+  const getExportDataUrl = (): string => {
+    initOffscreenCanvas();
+    const source = offscreenCanvasRef.current || canvasRef.current;
+    if (!source) return '';
+    const exp = document.createElement('canvas');
+    exp.width = source.width;
+    exp.height = source.height;
+    const eCtx = exp.getContext('2d');
+    if (!eCtx) return source.toDataURL('image/png');
+    eCtx.fillStyle = '#ffffff';
+    eCtx.fillRect(0, 0, exp.width, exp.height);
+    eCtx.drawImage(source, 0, 0);
+    return exp.toDataURL('image/png');
+  };
+
   // Native share sheet handles
   const handleNativeShare = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const dataUrl = getExportDataUrl();
+    if (!dataUrl) return;
 
     if (navigator.share) {
       try {
-        canvas.toBlob(async (blob) => {
-          if (!blob) return;
-          const file = new File([blob], `${currentProject}.png`, { type: 'image/png' });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: `Sketch plan of ${currentProject}`,
-              text: `Check out my drafting plans on Arch Pad Sketchbook!`
-            });
-          } else {
-            await navigator.share({
-              title: `Architectural sketch: ${currentProject}`,
-              text: 'Uploaded from my local PWA drafting client.'
-            });
-          }
-        });
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], `${currentProject}.png`, { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `Architectural drawing: ${currentProject}`,
+            text: `Architectural CAD drawing from Arch Pad Pro.`
+          });
+        } else {
+          await navigator.share({
+            title: `Architectural drawing: ${currentProject}`,
+            text: `Architectural CAD drawing from Arch Pad Pro.`
+          });
+        }
       } catch (err) {
-        // Standard user cancellation fallback download
+        // Fallback download if user cancels share dialog
         handleTriggerWebDownload();
       }
     } else {
@@ -1740,14 +1757,13 @@ export default function App() {
   };
 
   const handleTriggerWebDownload = () => {
-    initOffscreenCanvas();
-    const canvas = offscreenCanvasRef.current || canvasRef.current;
-    if (canvas) {
+    const dataUrl = getExportDataUrl();
+    if (dataUrl) {
       const link = document.createElement('a');
       link.download = `${currentProject}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = dataUrl;
       link.click();
-      showToast('Image exported as PNG');
+      showToast('Drawing exported as PNG');
     }
   };
 

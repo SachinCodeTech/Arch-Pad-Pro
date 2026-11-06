@@ -113,7 +113,7 @@ export default function Toolbar({
   const handleSetColor = (c: string) => {
     triggerHaptic();
     setPencilColor(c);
-    if (currentTool === 'eraser') {
+    if (currentTool === 'eraser' || currentTool === 'pan') {
       setTool('pen');
     }
   };
@@ -154,7 +154,7 @@ export default function Toolbar({
     if (idx < 0 || idx >= PEN_SIZES.length) return;
     const [pxValue] = PEN_SIZES[idx];
     setPencilSize(pxValue);
-    if (currentTool === 'eraser') {
+    if (currentTool === 'eraser' || currentTool === 'pan') {
       setTool('pen');
     }
   };
@@ -289,7 +289,7 @@ export default function Toolbar({
                   onClick={() => {
                     triggerHaptic();
                     setPencilNamedColor('light');
-                    if (currentTool === 'eraser') setTool('pen');
+                    if (currentTool === 'eraser' || currentTool === 'pan') setTool('pen');
                   }}
                   style={{ background: '#cccccc', color: '#111', borderColor: '#bbb' }}
                 >
@@ -300,7 +300,7 @@ export default function Toolbar({
                   onClick={() => {
                     triggerHaptic();
                     setPencilNamedColor('medium');
-                    if (currentTool === 'eraser') setTool('pen');
+                    if (currentTool === 'eraser' || currentTool === 'pan') setTool('pen');
                   }}
                   style={{ background: '#666', color: '#fff', borderColor: '#555' }}
                 >
@@ -311,7 +311,7 @@ export default function Toolbar({
                   onClick={() => {
                     triggerHaptic();
                     setPencilNamedColor('dark');
-                    if (currentTool === 'eraser') setTool('pen');
+                    if (currentTool === 'eraser' || currentTool === 'pan') setTool('pen');
                   }}
                   style={{ background: '#111', color: '#fff', borderColor: '#000' }}
                 >
