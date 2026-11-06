@@ -358,6 +358,18 @@ export default function App() {
     setAppReady(true);
     triggerPreserveResize();
     updateStorageUsageCount();
+
+    // Auto-fit 3200x2400 architectural sheet to mobile viewport
+    const screenW = window.innerWidth;
+    const screenH = window.innerHeight - 110;
+    if (screenW < 900) {
+      const fitScale = Math.max(0.08, Math.min(screenW / 3200, screenH / 2400) * 0.94);
+      const fitZoom = Math.round(fitScale * 100) / 100;
+      const targetPanX = Math.round((screenW - 3200 * fitZoom) / 2);
+      const targetPanY = Math.round(Math.max(12, (screenH - 2400 * fitZoom) / 2));
+      setZoom(fitZoom);
+      setPanOffset({ x: targetPanX, y: targetPanY });
+    }
   };
 
   // Periodic autosave monitoring

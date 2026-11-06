@@ -121,7 +121,7 @@ export default function CanvasArea({
       if (e.deltaY < 0) {
         newZoom = Math.min(currentZoom * zoomFactor, 8.0); // zoom in
       } else {
-        newZoom = Math.max(currentZoom / zoomFactor, 0.15); // zoom out
+        newZoom = Math.max(currentZoom / zoomFactor, 0.05); // zoom out down to 5%
       }
 
       const newPanX = mouseX - worldX * newZoom;
@@ -195,7 +195,7 @@ export default function CanvasArea({
 
         // Compute zoom scale factor
         const scale = distT / data.dist0;
-        const newZoom = Math.max(0.15, Math.min(data.startZoom * scale, 8.0));
+        const newZoom = Math.max(0.05, Math.min(data.startZoom * scale, 8.0));
 
         // Anchor world point under current center ct:
         // ct = worldAnchor * newZoom + newPan => newPan = ct - worldAnchor * newZoom

@@ -168,6 +168,20 @@ export default function Toolbar({
     }
   };
 
+  const handleFitToScreen = () => {
+    triggerHaptic();
+    const screenW = typeof window !== 'undefined' ? window.innerWidth : 400;
+    const screenH = typeof window !== 'undefined' ? window.innerHeight - 110 : 600;
+    const sheetW = 3200;
+    const sheetH = 2400;
+    const fitScale = Math.max(0.06, Math.min(screenW / sheetW, screenH / sheetH) * 0.94);
+    const fitZoom = Math.round(fitScale * 100) / 100;
+    const targetPanX = Math.round((screenW - sheetW * fitZoom) / 2);
+    const targetPanY = Math.round(Math.max(12, (screenH - sheetH * fitZoom) / 2));
+    setZoom(fitZoom);
+    setPanOffset({ x: targetPanX, y: targetPanY });
+  };
+
   const isShadeActive = (col: string) => {
     return pencilColor.toLowerCase() === col.toLowerCase();
   };
@@ -636,8 +650,8 @@ export default function Toolbar({
 
         <span className="text-[var(--text3)] opacity-40 font-mono text-[11px] select-none mx-0.5">|</span>
 
-        {/* Floating Zoom / Pan Controls */}
-        <div className="flex items-center gap-2">
+        {/* Floating Zoom / Pan Controls with Infinite CAD Range */}
+        <div className="flex items-center gap-1.5">
           <button
             title="Zoom In"
             type="button"
@@ -645,7 +659,8 @@ export default function Toolbar({
               e.stopPropagation();
               triggerHaptic();
               const oldZoom = zoom;
-              const newZoom = Math.min(Math.round((oldZoom + 0.15) * 100) / 100, 3.0);
+              const step = oldZoom < 0.25 ? 0.05 : oldZoom < 0.8 ? 0.1 : 0.25;
+              const newZoom = Math.min(Math.round((oldZoom + step) * 100) / 100, 5.0);
               if (newZoom === oldZoom) return;
               const cx = window.innerWidth / 2;
               const cy = window.innerHeight / 2;
@@ -660,18 +675,28 @@ export default function Toolbar({
             ＋
           </button>
           
-          <span className="text-[8px] font-mono font-[800] text-center text-[#5a73a3] select-none min-w-[30px]">
+          <button
+            title="Tap to Fit Drawing to Screen"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              triggerHaptic();
+              handleFitToScreen();
+            }}
+            className="text-[9px] font-mono font-[800] text-center text-[#4f8ef7] hover:text-white hover:bg-[var(--bg4)] bg-[var(--bg3)] border border-[var(--border2)] px-1.5 py-0.5 rounded-[4px] transition cursor-pointer min-w-[34px]"
+          >
             {Math.round(zoom * 100)}%
-          </span>
+          </button>
 
           <button
-            title="Zoom Out"
+            title="Zoom Out (Down to 5%)"
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               triggerHaptic();
               const oldZoom = zoom;
-              const newZoom = Math.max(Math.round((oldZoom - 0.15) * 100) / 100, 0.4);
+              const step = oldZoom <= 0.25 ? 0.05 : oldZoom <= 0.8 ? 0.1 : 0.25;
+              const newZoom = Math.max(Math.round((oldZoom - step) * 100) / 100, 0.05);
               if (newZoom === oldZoom) return;
               const cx = window.innerWidth / 2;
               const cy = window.innerHeight / 2;
@@ -684,6 +709,19 @@ export default function Toolbar({
             className="w-[20px] h-[20px] flex items-center justify-center font-sans text-[11px] font-[900] bg-[var(--bg3)] hover:bg-[var(--bg4)] border border-[var(--border2)] rounded-[4px] text-white hover:scale-[1.05] active:scale-[0.95] transition cursor-pointer"
           >
             －
+          </button>
+
+          <button
+            title="Fit Plan to Screen"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              triggerHaptic();
+              handleFitToScreen();
+            }}
+            className="h-[20px] px-1.5 flex items-center justify-center font-mono text-[8.5px] font-[800] bg-[var(--bg3)] hover:bg-[var(--bg4)] border border-[var(--border2)] rounded-[4px] text-[#4f8ef7] hover:scale-[1.05] active:scale-[0.95] transition cursor-pointer tracking-wider"
+          >
+            FIT
           </button>
 
           <span className="text-[var(--text3)] opacity-40 font-mono text-[11px] select-none mx-0.5">|</span>
