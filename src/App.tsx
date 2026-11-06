@@ -6,7 +6,7 @@ import Toolbar from './components/Toolbar';
 import Modals from './components/Modals';
 import Toast from './components/Toast';
 
-import { Project, ToolType, ThemeType, ArchSymbolType, PaperGridType } from './types';
+import { Project, ToolType, ThemeType, PaperGridType } from './types';
 import { createSampleBlueprintDataUrl } from './lib/sampleBlueprints';
 import {
   getLocalProjects,
@@ -35,7 +35,6 @@ export default function App() {
   const [appReady, setAppReady] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentTool, setTool] = useState<ToolType>('pen');
-  const [currentSymbol, setSymbol] = useState<ArchSymbolType>('north_arrow');
   const [paperGrid, setPaperGrid] = useState<PaperGridType>('cad');
   const [pencilSize, setPencilSize] = useState<number>(2);
   const [pencilColor, setPencilColor] = useState<string>('#1a1a1a');
@@ -1114,263 +1113,6 @@ export default function App() {
         ex - hw * Math.cos(angle + Math.PI / 6),
         ey - hw * Math.sin(angle + Math.PI / 6)
       );
-    } else if (type === 'dimension') {
-      const dx = ex - sx;
-      const dy = ey - sy;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      if (len < 4) return;
-      const angle = Math.atan2(dy, dx);
-      const perpAngle = angle + Math.PI / 2;
-      const strokeW = customWidth !== undefined ? customWidth : pencilSize;
-      const extLen = 14;
-      const tickLen = 8;
-
-      // 1. Witness Extension Lines
-      ctx.lineWidth = Math.max(0.75, strokeW * 0.75);
-      ctx.beginPath();
-      ctx.moveTo(sx - Math.cos(perpAngle) * extLen, sy - Math.sin(perpAngle) * extLen);
-      ctx.lineTo(sx + Math.cos(perpAngle) * extLen, sy + Math.sin(perpAngle) * extLen);
-      ctx.moveTo(ex - Math.cos(perpAngle) * extLen, ey - Math.sin(perpAngle) * extLen);
-      ctx.lineTo(ex + Math.cos(perpAngle) * extLen, ey + Math.sin(perpAngle) * extLen);
-      ctx.stroke();
-
-      // 2. Main Dimension Line
-      ctx.lineWidth = strokeW;
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(ex, ey);
-      ctx.stroke();
-
-      // 3. 45-degree CAD Architectural Hash Ticks
-      ctx.lineWidth = Math.max(1.5, strokeW * 1.4);
-      const tickAngle = angle + Math.PI / 4;
-      ctx.beginPath();
-      ctx.moveTo(sx - Math.cos(tickAngle) * tickLen, sy - Math.sin(tickAngle) * tickLen);
-      ctx.lineTo(sx + Math.cos(tickAngle) * tickLen, sy + Math.sin(tickAngle) * tickLen);
-      ctx.moveTo(ex - Math.cos(tickAngle) * tickLen, ey - Math.sin(tickAngle) * tickLen);
-      ctx.lineTo(ex + Math.cos(tickAngle) * tickLen, ey + Math.sin(tickAngle) * tickLen);
-      ctx.stroke();
-
-      // 4. Metric Dimension Annotation Tag
-      const scaleMultiplier = currentScale === '1:20' ? 0.02 : currentScale === '1:50' ? 0.05 : currentScale === '1:200' ? 0.2 : 0.1;
-      const realMeters = ((len * scaleMultiplier) / 2.5).toFixed(2);
-      const dimText = `${realMeters} m`;
-
-      const midX = (sx + ex) / 2;
-      const midY = (sy + ey) / 2;
-
-      ctx.save();
-      ctx.translate(midX, midY);
-      let textAngle = angle;
-      if (textAngle > Math.PI / 2 || textAngle < -Math.PI / 2) {
-        textAngle += Math.PI;
-      }
-      ctx.rotate(textAngle);
-
-      const fontSize = Math.max(10, strokeW * 3.5);
-      ctx.font = `bold ${fontSize}px 'JetBrains Mono', monospace`;
-      const textWidth = ctx.measureText(dimText).width;
-
-      ctx.fillStyle = theme === 'light' ? '#ffffff' : '#18181f';
-      ctx.fillRect(-textWidth / 2 - 4, -fontSize - 2, textWidth + 8, fontSize + 4);
-
-      ctx.fillStyle = pencilColor;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText(dimText, 0, 0);
-      ctx.restore();
-    } else if (type === 'symbol') {
-      const dx = ex - sx;
-      const dy = ey - sy;
-      const len = Math.max(20, Math.sqrt(dx * dx + dy * dy));
-      const midX = (sx + ex) / 2;
-      const midY = (sy + ey) / 2;
-      const angle = Math.atan2(dy, dx);
-      const strokeW = customWidth !== undefined ? customWidth : pencilSize;
-
-      ctx.save();
-      if (currentSymbol === 'north_arrow') {
-        const radius = Math.max(22, Math.min(len / 2, 70));
-        ctx.translate(midX, midY);
-        // Outer ring
-        ctx.lineWidth = Math.max(1.5, strokeW);
-        ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Inner circle
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.82, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Sharp North Pointer Needle
-        const needleH = radius * 0.76;
-        const needleW = radius * 0.28;
-
-        // Dark half
-        ctx.beginPath();
-        ctx.moveTo(0, -needleH);
-        ctx.lineTo(-needleW, needleH * 0.4);
-        ctx.lineTo(0, 0);
-        ctx.closePath();
-        ctx.fillStyle = pencilColor;
-        ctx.fill();
-
-        // Light outline half
-        ctx.beginPath();
-        ctx.moveTo(0, -needleH);
-        ctx.lineTo(needleW, needleH * 0.4);
-        ctx.lineTo(0, 0);
-        ctx.closePath();
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // 'N' label
-        ctx.font = `bold ${Math.max(12, radius * 0.45)}px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = pencilColor;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText('N', 0, -radius - 4);
-      } else if (currentSymbol === 'door_swing') {
-        ctx.lineWidth = Math.max(1.5, strokeW);
-        ctx.beginPath();
-        const perpX = sx + Math.cos(angle - Math.PI / 2) * len;
-        const perpY = sy + Math.sin(angle - Math.PI / 2) * len;
-        ctx.moveTo(sx, sy);
-        ctx.lineTo(perpX, perpY);
-        ctx.stroke();
-
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.arc(sx, sy, len, angle - Math.PI / 2, angle, false);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      } else if (currentSymbol === 'double_door') {
-        const halfLen = len / 2;
-        ctx.lineWidth = Math.max(1.5, strokeW);
-        const leftLeafX = sx + Math.cos(angle - Math.PI / 2) * halfLen;
-        const leftLeafY = sy + Math.sin(angle - Math.PI / 2) * halfLen;
-        ctx.beginPath();
-        ctx.moveTo(sx, sy);
-        ctx.lineTo(leftLeafX, leftLeafY);
-        ctx.stroke();
-
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3, 3]);
-        ctx.beginPath();
-        ctx.arc(sx, sy, halfLen, angle - Math.PI / 2, angle, false);
-        ctx.stroke();
-
-        ctx.lineWidth = Math.max(1.5, strokeW);
-        const rightLeafX = ex + Math.cos(angle - Math.PI / 2) * halfLen;
-        const rightLeafY = ey + Math.sin(angle - Math.PI / 2) * halfLen;
-        ctx.beginPath();
-        ctx.moveTo(ex, ey);
-        ctx.lineTo(rightLeafX, rightLeafY);
-        ctx.stroke();
-
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(ex, ey, halfLen, angle + Math.PI / 2, Math.PI + angle, false);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      } else if (currentSymbol === 'window') {
-        const perpX = Math.cos(angle + Math.PI / 2);
-        const perpY = Math.sin(angle + Math.PI / 2);
-        const wallThick = 12;
-
-        ctx.lineWidth = Math.max(1.2, strokeW);
-        ctx.beginPath();
-        ctx.moveTo(sx - perpX * wallThick, sy - perpY * wallThick);
-        ctx.lineTo(sx + perpX * wallThick, sy + perpY * wallThick);
-        ctx.moveTo(ex - perpX * wallThick, ey - perpY * wallThick);
-        ctx.lineTo(ex + perpX * wallThick, ey + perpY * wallThick);
-        ctx.moveTo(sx - perpX * wallThick, sy - perpY * wallThick);
-        ctx.lineTo(ex - perpX * wallThick, ey - perpY * wallThick);
-        ctx.moveTo(sx + perpX * wallThick, sy + perpY * wallThick);
-        ctx.lineTo(ex + perpX * wallThick, ey + perpY * wallThick);
-        ctx.stroke();
-
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(sx, sy);
-        ctx.lineTo(ex, ey);
-        ctx.stroke();
-      } else if (currentSymbol === 'column_bubble') {
-        const radius = Math.max(16, strokeW * 6);
-        ctx.translate(midX, midY);
-        ctx.lineWidth = Math.max(1.5, strokeW);
-        ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(-radius - 10, 0);
-        ctx.lineTo(radius + 10, 0);
-        ctx.moveTo(0, -radius - 10);
-        ctx.lineTo(0, radius + 10);
-        ctx.stroke();
-
-        ctx.font = `bold ${Math.max(12, radius * 0.9)}px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = pencilColor;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('A1', 0, 0);
-      } else if (currentSymbol === 'level_datum') {
-        ctx.translate(midX, midY);
-        ctx.lineWidth = Math.max(1.5, strokeW);
-        ctx.beginPath();
-        ctx.moveTo(-45, 0);
-        ctx.lineTo(45, 0);
-        ctx.stroke();
-
-        const triSize = 14;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(-triSize, -triSize * 1.5);
-        ctx.lineTo(triSize, -triSize * 1.5);
-        ctx.closePath();
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(0, -triSize * 1.5);
-        ctx.lineTo(triSize, -triSize * 1.5);
-        ctx.closePath();
-        ctx.fillStyle = pencilColor;
-        ctx.fill();
-
-        ctx.font = `bold 11px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = pencilColor;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText('+3.200 m', triSize + 6, -3);
-      } else if (currentSymbol === 'scale_bar') {
-        ctx.translate(midX, midY);
-        const barW = Math.max(120, len);
-        const barH = 10;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(-barW / 2, -barH / 2, barW, barH);
-
-        const segW = barW / 4;
-        for (let i = 0; i < 4; i++) {
-          if (i % 2 === 0) {
-            ctx.fillStyle = pencilColor;
-            ctx.fillRect(-barW / 2 + i * segW, -barH / 2, segW, barH);
-          }
-        }
-        ctx.font = `9px 'JetBrains Mono', monospace`;
-        ctx.fillStyle = pencilColor;
-        ctx.textAlign = 'center';
-        ctx.fillText('0', -barW / 2, barH + 4);
-        ctx.fillText('1m', -barW / 2 + segW, barH + 4);
-        ctx.fillText('2m', -barW / 2 + segW * 2, barH + 4);
-        ctx.fillText('4m', barW / 2, barH + 4);
-      }
-      ctx.restore();
     }
   };
 
@@ -1925,8 +1667,6 @@ export default function App() {
         <Toolbar
           currentTool={currentTool}
           setTool={setTool}
-          currentSymbol={currentSymbol}
-          setSymbol={setSymbol}
           paperGrid={paperGrid}
           setPaperGrid={setPaperGrid}
           pencilSize={pencilSize}

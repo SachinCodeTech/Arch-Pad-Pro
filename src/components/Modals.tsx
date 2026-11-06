@@ -1014,11 +1014,10 @@ export default function Modals({
                   </div>
                   <div className="text-[9.5px] font-mono text-[var(--text3)] mb-2">November 2026</div>
                   <ul className="text-[11px] text-[var(--text2)] space-y-1 list-disc list-inside leading-relaxed">
-                    <li>Integrated real-world CAD Dimensioning tool with calibrated ratio measurements.</li>
-                    <li>Added Architectural CAD Symbols Library (North Arrow, Doors, Windows, Grids).</li>
+                    <li>Midpoint Quadratic Bézier curve smoothing for natural freehand pen strokes.</li>
+                    <li>Infinite drafting canvas workspace with high-performance zoom and pan navigation.</li>
                     <li>Architectural drafting paper presets (Blueprint, Metric, Isometric 30°, Dot Matrix).</li>
-                    <li>Midpoint Quadratic Bézier curve smoothing for natural pencil strokes.</li>
-                    <li>Pre-loaded architectural sample blueprints for instant CAD exploration.</li>
+                    <li>Offline-first storage engine with zero network dependencies.</li>
                   </ul>
                 </div>
 

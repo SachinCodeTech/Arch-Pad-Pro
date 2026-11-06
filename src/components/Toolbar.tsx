@@ -1,11 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { ToolType, ThemeType, PEN_SIZES, ArchSymbolType, PaperGridType } from '../types';
+import { ToolType, ThemeType, PEN_SIZES, PaperGridType } from '../types';
 
 interface ToolbarProps {
   currentTool: ToolType;
   setTool: (t: ToolType) => void;
-  currentSymbol: ArchSymbolType;
-  setSymbol: (s: ArchSymbolType) => void;
   paperGrid: PaperGridType;
   setPaperGrid: (g: PaperGridType) => void;
   pencilSize: number;
@@ -29,13 +27,11 @@ interface ToolbarProps {
   setPanOffset: (offset: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => void;
 }
 
-type TabCategory = 'pen' | 'cad' | 'shapes' | 'actions' | 'view';
+type TabCategory = 'pen' | 'shapes' | 'actions' | 'view';
 
 export default function Toolbar({
   currentTool,
   setTool,
-  currentSymbol,
-  setSymbol,
   paperGrid,
   setPaperGrid,
   pencilSize,
@@ -74,9 +70,7 @@ export default function Toolbar({
   // Auto-switch tabs based on selected tool
   useEffect(() => {
     const shapeTools = ['line', 'rect', 'circle', 'arrow'];
-    if (currentTool === 'dimension' || currentTool === 'symbol') {
-      setActiveCat('cad');
-    } else if (shapeTools.includes(currentTool)) {
+    if (shapeTools.includes(currentTool)) {
       setActiveCat('shapes');
     } else if (['pen', 'eraser', 'text'].includes(currentTool)) {
       setActiveCat('pen');
@@ -186,16 +180,6 @@ export default function Toolbar({
     return pencilColor.toLowerCase() === col.toLowerCase();
   };
 
-  const symbolsList: { id: ArchSymbolType; label: string; icon: string }[] = [
-    { id: 'north_arrow', label: 'North Arrow', icon: '🧭' },
-    { id: 'door_swing', label: 'Door 90°', icon: '🚪' },
-    { id: 'double_door', label: 'Double Door', icon: '🚪🚪' },
-    { id: 'window', label: 'Window Sill', icon: '🪟' },
-    { id: 'column_bubble', label: 'Grid Bubble', icon: '⭕' },
-    { id: 'level_datum', label: 'Level Datum', icon: '📐' },
-    { id: 'scale_bar', label: 'Scale Bar', icon: '📏' }
-  ];
-
   const gridStylesList: { id: PaperGridType; label: string; icon: string }[] = [
     { id: 'cad', label: 'CAD Grid', icon: '▦' },
     { id: 'blueprint', label: 'Blueprint', icon: '🟦' },
@@ -225,15 +209,6 @@ export default function Toolbar({
               }}
             >
               ✏ Pen
-            </div>
-            <div
-              className={`cat-tab ${activeCat === 'cad' ? 'active' : ''}`}
-              onClick={() => {
-                triggerHaptic();
-                setActiveCat('cad');
-              }}
-            >
-              📐 CAD & Dim
             </div>
             <div
               className={`cat-tab ${activeCat === 'shapes' ? 'active' : ''}`}
@@ -365,77 +340,7 @@ export default function Toolbar({
             </div>
           )}
 
-          {/* TAB 2: CAD & DIMENSIONS (ARCHITECTURAL WORKSTATION SUITE) */}
-          {activeCat === 'cad' && (
-            <div className="cat-panel active flex flex-col items-center">
-              {/* PRIMARY CAD TOOL ROW */}
-              <div className="tb-row">
-                <button
-                  className={`tb-btn ${currentTool === 'dimension' ? 'active bg-[#4f8ef7]/20 border border-[#4f8ef7]' : ''}`}
-                  onClick={() => {
-                    triggerHaptic();
-                    setTool('dimension');
-                  }}
-                >
-                  ⤢ CAD Dimension Line
-                </button>
-                <button
-                  className={`tb-btn ${currentTool === 'symbol' ? 'active bg-[#4f8ef7]/20 border border-[#4f8ef7]' : ''}`}
-                  onClick={() => {
-                    triggerHaptic();
-                    setTool('symbol');
-                  }}
-                >
-                  🧭 Stamp Symbol
-                </button>
-                {currentTool !== 'pen' && (
-                  <button
-                    className="tb-btn text-[var(--accent)] font-semibold"
-                    onClick={() => {
-                      triggerHaptic();
-                      setTool('pen');
-                    }}
-                  >
-                    ✏ Pen
-                  </button>
-                )}
-              </div>
-
-              {/* ARCHITECTURAL SYMBOLS PALETTE */}
-              <div className="w-full border-t border-[var(--border)] pt-2 mt-2">
-                <div className="text-[9px] font-mono text-[var(--text3)] uppercase tracking-wider text-center mb-1.5">
-                  ARCHITECTURAL STAMPS LIBRARY
-                </div>
-                <div className="flex flex-wrap items-center justify-center gap-1.5">
-                  {symbolsList.map((sym) => (
-                    <button
-                      key={sym.id}
-                      className={`tb-btn text-[11px] flex items-center gap-1.5 py-1 px-2.5 rounded-lg border transition ${
-                        currentTool === 'symbol' && currentSymbol === sym.id
-                          ? 'bg-[#4f8ef7]/25 border-[#4f8ef7] text-white font-semibold'
-                          : 'border-[var(--border)] text-[var(--text2)] hover:bg-[var(--bg3)]'
-                      }`}
-                      onClick={() => {
-                        triggerHaptic();
-                        setSymbol(sym.id);
-                        setTool('symbol');
-                      }}
-                    >
-                      <span>{sym.icon}</span>
-                      <span>{sym.label}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="text-[8px] font-mono text-center text-[var(--text3)] mt-1.5 opacity-70">
-                  {currentTool === 'dimension'
-                    ? 'DRAG BETWEEN TWO POINTS TO MEASURE & CREATE CAD DIMENSION'
-                    : 'TAP ON CANVAS TO PLACE SELECTED ARCHITECTURAL STAMP'}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: SHAPES */}
+          {/* TAB 2: SHAPES */}
           {activeCat === 'shapes' && (
             <div className="cat-panel active flex flex-col items-center">
               <div className="tb-row">
@@ -644,7 +549,7 @@ export default function Toolbar({
           onClick={togglePullup}
         >
           <span className="handle-label text-[var(--accent)] font-sans text-[11px] tracking-[0.5px] font-[900] uppercase select-none flex items-center gap-1">
-            {pullupOpen ? 'v CAD Tools' : '^ CAD Tools'}
+            {pullupOpen ? 'v Tools' : '^ Tools'}
           </span>
         </div>
 

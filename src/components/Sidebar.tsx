@@ -466,32 +466,6 @@ export default function Sidebar({
               <span className="sb-ico text-[15px] w-[20px] text-center shrink-0">➜</span>
               <span className="sb-lbl text-[12px] font-[600] flex-1">Arrow</span>
             </div>
-            <div
-              className={`sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none transition-colors ${
-                currentTool === 'dimension' ? 'bg-[#4f8ef7]/15 text-[#4f8ef7] font-semibold' : 'text-[var(--text)]'
-              }`}
-              onClick={() => {
-                onClose();
-                setTool('dimension');
-              }}
-            >
-              <span className="sb-ico text-[15px] w-[20px] text-center shrink-0">⤢</span>
-              <span className="sb-lbl text-[12px] font-[600] flex-1">Dimension Line</span>
-              <span className="text-[9px] font-mono text-[var(--accent)]">CAD</span>
-            </div>
-            <div
-              className={`sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none transition-colors ${
-                currentTool === 'symbol' ? 'bg-[#4f8ef7]/15 text-[#4f8ef7] font-semibold' : 'text-[var(--text)]'
-              }`}
-              onClick={() => {
-                onClose();
-                setTool('symbol');
-              }}
-            >
-              <span className="sb-ico text-[15px] w-[20px] text-center shrink-0">🧭</span>
-              <span className="sb-lbl text-[12px] font-[600] flex-1">Architectural Symbols</span>
-              <span className="text-[9px] font-mono text-[var(--accent)]">LIB</span>
-            </div>
           </div>
         </div>
         <div className="sb-divider h-[1px] bg-[var(--border)] m-[6px_10px]" />

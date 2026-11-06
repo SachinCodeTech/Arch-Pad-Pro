@@ -23,18 +23,7 @@ export type ToolType =
   | 'rect' 
   | 'circle' 
   | 'arrow' 
-  | 'dimension' 
-  | 'symbol' 
   | 'pan';
-
-export type ArchSymbolType = 
-  | 'north_arrow' 
-  | 'door_swing' 
-  | 'double_door' 
-  | 'window' 
-  | 'column_bubble' 
-  | 'level_datum' 
-  | 'scale_bar';
 
 export type PaperGridType = 'cad' | 'blueprint' | 'metric' | 'isometric' | 'dots' | 'plain';
 
