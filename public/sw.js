@@ -80,9 +80,8 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  // Bypass assetlinks.json and Google Firebase/Auth endpoints so verification & SDK manage state
+  // Bypass Google Firebase, Auth, and Cloud sync endpoints so SDK manages its own state
   if (
-    url.pathname.startsWith('/.well-known/') ||
     url.hostname.includes('firestore.googleapis.com') ||
     url.hostname.includes('firebase') ||
     url.hostname.includes('identitytoolkit') ||
@@ -92,25 +91,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 1. Navigation requests (HTML SPA shell) - Stale-While-Revalidate / Cache-First for instant native offline launch
+  // 1. Navigation requests (HTML SPA shell) - Network First with immediate Offline Cache Fallback
   if (req.mode === 'navigate') {
     event.respondWith(
-      caches.match('/index.html').then((cachedIndex) => {
-        const fetchPromise = fetch(req)
-          .then((networkResponse) => {
-            if (networkResponse && networkResponse.ok) {
-              const cloned = networkResponse.clone();
-              caches.open(STATIC_CACHE).then((cache) => {
-                cache.put('/index.html', cloned);
-              });
-            }
-            return networkResponse;
-          })
-          .catch(() => cachedIndex || caches.match('/'));
-
-        // If cached shell is available, deliver immediately for 0ms native app launch
-        return cachedIndex || fetchPromise;
-      })
+      fetch(req)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.ok) {
+            const cloned = networkResponse.clone();
+            caches.open(STATIC_CACHE).then((cache) => {
+              cache.put('/index.html', cloned);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match('/index.html').then((cachedIndex) => {
+            return cachedIndex || caches.match('/');
+          });
+        })
     );
     return;
   }

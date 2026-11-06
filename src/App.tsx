@@ -6,8 +6,7 @@ import Toolbar from './components/Toolbar';
 import Modals from './components/Modals';
 import Toast from './components/Toast';
 
-import { Project, ToolType, ThemeType, PaperGridType } from './types';
-import { createSampleBlueprintDataUrl } from './lib/sampleBlueprints';
+import { Project, ToolType, ThemeType } from './types';
 import {
   getLocalProjects,
   saveLocalProject,
@@ -35,16 +34,15 @@ export default function App() {
   const [appReady, setAppReady] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentTool, setTool] = useState<ToolType>('pen');
-  const [paperGrid, setPaperGrid] = useState<PaperGridType>('cad');
   const [pencilSize, setPencilSize] = useState<number>(2);
   const [pencilColor, setPencilColor] = useState<string>('#1a1a1a');
-  const [gridVisible, setGridVisible] = useState<boolean>(true);
-  const [currentScale, setScale] = useState<string>('1:50');
+  const [gridVisible, setGridVisible] = useState<boolean>(false);
+  const [currentScale, setScale] = useState<string>('1:100');
   const [theme, setTheme] = useState<ThemeType>('dark');
 
   // Multi-store tracking
   const [projects, setProjects] = useState<Record<string, Project>>({});
-  const [currentProject, setCurrentProject] = useState<string>('Villa Residence (1:50)');
+  const [currentProject, setCurrentProject] = useState<string>('Sketch 1');
 
   // Firebase auth & syncing concepts
   const [user, setUser] = useState<User | null>(null);
@@ -87,6 +85,9 @@ export default function App() {
   const [toastStatus, setToastStatus] = useState<'success' | 'info' | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // PWA Prompt Info
+  const [pwaPrompt, setPwaPrompt] = useState<any>(null);
+
   // High-performance Zoom and Panning offsets
   const [zoom, setZoom] = useState<number>(1.0);
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -100,24 +101,21 @@ export default function App() {
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
 
-  // High-performance GPU texture rollback buffer for instant 0ms gesture rollback
-  const rollbackCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const hasRollback = useRef<boolean>(false);
-  const strokePointCount = useRef<number>(0);
+  // Stroke rollback buffer to eliminate accidental dots and line segments when pinch-gestures start
+  const activeStrokeRollback = useRef<ImageData | null>(null);
 
   const cancelCurrentStroke = () => {
     if (isDrawing || isPanning.current || previewData.current) {
       setIsDrawing(false);
       isPanning.current = false;
       previewData.current = null;
-      if (hasRollback.current && rollbackCanvasRef.current && offscreenCanvasRef.current) {
+      if (activeStrokeRollback.current && offscreenCanvasRef.current) {
         const oCtx = offscreenCanvasRef.current.getContext('2d');
         if (oCtx) {
-          oCtx.clearRect(0, 0, offscreenCanvasRef.current.width, offscreenCanvasRef.current.height);
-          oCtx.drawImage(rollbackCanvasRef.current, 0, 0);
+          oCtx.putImageData(activeStrokeRollback.current, 0, 0);
         }
       }
-      hasRollback.current = false;
+      activeStrokeRollback.current = null;
       redrawVisibleCanvas();
     }
   };
@@ -131,7 +129,15 @@ export default function App() {
     }, 2200);
   };
 
-  // Native Android environment initialized
+  // Listen to PWA installation prompts
+  useEffect(() => {
+    const handleBeforePrompt = (e: any) => {
+      e.preventDefault();
+      setPwaPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforePrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
+  }, []);
 
   // Check URL search parameters or hash to open modal in-app without external browser
   useEffect(() => {
@@ -202,7 +208,7 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [activeModal, sidebarOpen, textInputState.visible]);
 
-  // Monitor connectivity: Sync local changes when network connection is restored
+  // Monitor connectivity: Use IndexedDB to sync local changes when network connection is restored
   useEffect(() => {
     const handleOnline = async () => {
       setIsOnline(true);
@@ -234,7 +240,7 @@ export default function App() {
         } else if (user) {
           await triggerCloudSynchronize(user.uid);
         } else if (syncQueue.length > 0) {
-          showToast(`${syncQueue.length} offline changes saved safely on device.`, 'info');
+          showToast(`${syncQueue.length} offline changes stored securely in IndexedDB.`, 'info');
         }
       } catch (err) {
         console.warn('Auto-sync on reconnect error:', err);
@@ -245,7 +251,7 @@ export default function App() {
 
     const handleOffline = () => {
       setIsOnline(false);
-      showToast('Offline Mode — Drawings saved on device storage.', 'info');
+      showToast('Offline Mode — Changes will be stored in IndexedDB.', 'info');
     };
 
     window.addEventListener('online', handleOnline);
@@ -273,91 +279,34 @@ export default function App() {
   useEffect(() => {
     const fetchLocal = async () => {
       try {
-        const sample1: Project = {
-          id: 'proj_villa_residence',
-          name: 'Villa Residence (1:50)',
-          created: Date.now() - 86400000 * 2,
-          modified: Date.now(),
-          scale: '1:50'
-        };
-        const sample2: Project = {
-          id: 'proj_structural_grid',
-          name: 'Column Grid Layout (1:100)',
-          created: Date.now() - 86400000,
-          modified: Date.now(),
-          scale: '1:100'
-        };
-        const sample3: Project = {
-          id: 'proj_south_elevation',
-          name: 'South Facade Elevation (1:100)',
-          created: Date.now(),
-          modified: Date.now(),
-          scale: '1:100'
-        };
-
-        let loadedProjects: Project[] = [];
-        try {
-          loadedProjects = await getLocalProjects();
-        } catch (dbErr) {
-          console.warn('Initial IndexedDB read error (self-healing):', dbErr);
-        }
-
+        const loadedProjects = await getLocalProjects();
         const normalized: Record<string, Project> = {};
         
-        // If projects empty or missing blueprints, seed full CAD blueprint collection
-        const needsSeed = loadedProjects.length === 0 || 
-          (loadedProjects.length === 1 && loadedProjects[0].name === 'Sketch 1') ||
-          !loadedProjects.some((p) => p.name === 'Villa Residence (1:50)');
-          
-        if (needsSeed) {
-          normalized[sample1.name] = sample1;
-          normalized[sample2.name] = sample2;
-          normalized[sample3.name] = sample3;
-          // preserve any custom user projects
-          loadedProjects.forEach((p) => {
-            if (p.name !== 'Sketch 1') normalized[p.name] = p;
-          });
+        if (loadedProjects.length === 0) {
+          // Initialize first default sketch
+          const defaultProject: Project = {
+            id: 'Sketch_1',
+            name: 'Sketch 1',
+            created: Date.now(),
+            modified: Date.now(),
+            scale: '1:100'
+          };
+          await saveLocalProject(defaultProject);
+          normalized[defaultProject.name] = defaultProject;
           setProjects(normalized);
-          setCurrentProject(sample1.name);
-          try {
-            localStorage.setItem('voxpad_current', sample1.name);
-          } catch {}
-
-          // Background persist to IndexedDB with resilient error protection
-          (async () => {
-            try {
-              await saveLocalProject(sample1);
-              await saveLocalProject(sample2);
-              await saveLocalProject(sample3);
-
-              const data1 = createSampleBlueprintDataUrl('villa', 3200, 2400, false);
-              const data2 = createSampleBlueprintDataUrl('structural', 3200, 2400, false);
-              const data3 = createSampleBlueprintDataUrl('elevation', 3200, 2400, false);
-
-              await saveLocalDrawing(sample1.id, data1);
-              await saveLocalDrawing(sample2.id, data2);
-              await saveLocalDrawing(sample3.id, data3);
-            } catch (persistErr) {
-              console.warn('Background seed persist error:', persistErr);
-            }
-          })();
+          setCurrentProject(defaultProject.name);
+          localStorage.setItem('voxpad_current', defaultProject.name);
         } else {
           loadedProjects.forEach((p) => {
             normalized[p.name] = p;
           });
           setProjects(normalized);
-          let lastUsed = sample1.name;
-          try {
-            lastUsed = localStorage.getItem('voxpad_current') || loadedProjects[0].name;
-          } catch {}
+          const lastUsed = localStorage.getItem('voxpad_current') || loadedProjects[0].name;
           setCurrentProject(normalized[lastUsed] ? lastUsed : loadedProjects[0].name);
         }
 
         // Load Theme settings
-        let loadedTheme: ThemeType = 'dark';
-        try {
-          loadedTheme = (localStorage.getItem('voxpad_theme') as ThemeType) || 'dark';
-        } catch {}
+        const loadedTheme = (localStorage.getItem('voxpad_theme') as ThemeType) || 'dark';
         setTheme(loadedTheme);
 
         // Service Worker dynamic registration
@@ -368,18 +317,6 @@ export default function App() {
         }
       } catch (err) {
         console.error('Error opening local database stores:', err);
-        // Guaranteed fallback in-memory seed even if IndexedDB is entirely unavailable
-        const fallbackProjects: Record<string, Project> = {
-          'Villa Residence (1:50)': {
-            id: 'proj_villa_residence',
-            name: 'Villa Residence (1:50)',
-            created: Date.now(),
-            modified: Date.now(),
-            scale: '1:50'
-          }
-        };
-        setProjects(fallbackProjects);
-        setCurrentProject('Villa Residence (1:50)');
       }
     };
     fetchLocal();
@@ -390,18 +327,6 @@ export default function App() {
     setAppReady(true);
     triggerPreserveResize();
     updateStorageUsageCount();
-
-    // Auto-fit 3200x2400 architectural sheet to mobile viewport
-    const screenW = window.innerWidth;
-    const screenH = window.innerHeight - 110;
-    if (screenW < 900) {
-      const fitScale = Math.max(0.08, Math.min(screenW / 3200, screenH / 2400) * 0.94);
-      const fitZoom = Math.round(fitScale * 100) / 100;
-      const targetPanX = Math.round((screenW - 3200 * fitZoom) / 2);
-      const targetPanY = Math.round(Math.max(12, (screenH - 2400 * fitZoom) / 2));
-      setZoom(fitZoom);
-      setPanOffset({ x: targetPanX, y: targetPanY });
-    }
   };
 
   // Periodic autosave monitoring
@@ -422,7 +347,7 @@ export default function App() {
         clearBgCADGrid();
       }
     }
-  }, [zoom, panOffset, gridVisible, theme, paperGrid, appReady]);
+  }, [zoom, panOffset, gridVisible, theme, appReady]);
 
   // Adjust document body theme styling
   useEffect(() => {
@@ -444,16 +369,17 @@ export default function App() {
     if (appReady) {
       loadSelectedProjectDrawing();
     }
-  }, [currentProject, projects, appReady]);
+  }, [currentProject, appReady]);
 
   const initOffscreenCanvas = () => {
     if (!offscreenCanvasRef.current) {
       offscreenCanvasRef.current = document.createElement('canvas');
-      offscreenCanvasRef.current.width = 3200;
-      offscreenCanvasRef.current.height = 2400;
+      offscreenCanvasRef.current.width = 5000;
+      offscreenCanvasRef.current.height = 4000;
       const oCtx = offscreenCanvasRef.current.getContext('2d');
       if (oCtx) {
-        oCtx.clearRect(0, 0, 3200, 2400);
+        oCtx.fillStyle = theme === 'light' ? '#ffffff' : '#fafaf8';
+        oCtx.fillRect(0, 0, 5000, 4000);
       }
     }
   };
@@ -465,7 +391,8 @@ export default function App() {
     if (!ctx) return;
 
     // Seamless full-screen architectural paper workspace (no borders, no cutoff corners)
-    ctx.fillStyle = '#ffffff';
+    const paperBg = theme === 'light' ? '#ffffff' : '#fafaf8';
+    ctx.fillStyle = paperBg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();
@@ -487,34 +414,17 @@ export default function App() {
     const oCtx = oCanvas.getContext('2d');
     if (!oCtx) return;
 
-    // Reset offscreen to clean transparent layer (infinite seamless paper)
-    oCtx.clearRect(0, 0, oCanvas.width, oCanvas.height);
+    // Reset offscreen to solid white/light background
+    oCtx.fillStyle = theme === 'light' ? '#ffffff' : '#fafaf8';
+    oCtx.fillRect(0, 0, oCanvas.width, oCanvas.height);
 
     setHistory([]);
     setHistoryIndex(-1);
 
-    let matchProj = projects[currentProject];
-    if (!matchProj) {
-      const allLocal = await getLocalProjects();
-      matchProj = allLocal.find((p) => p.name === currentProject || p.id === currentProject);
-    }
-
+    const matchProj = projects[currentProject];
     if (matchProj) {
       setScale(matchProj.scale);
-      let cached = await getLocalDrawing(matchProj.id);
-      if (!cached) {
-        if (matchProj.id === 'proj_villa_residence' || matchProj.name.includes('Villa')) {
-          cached = createSampleBlueprintDataUrl('villa', 3200, 2400, false);
-          await saveLocalDrawing(matchProj.id, cached);
-        } else if (matchProj.id === 'proj_structural_grid' || matchProj.name.includes('Column')) {
-          cached = createSampleBlueprintDataUrl('structural', 3200, 2400, false);
-          await saveLocalDrawing(matchProj.id, cached);
-        } else if (matchProj.id === 'proj_south_elevation' || matchProj.name.includes('Elevation')) {
-          cached = createSampleBlueprintDataUrl('elevation', 3200, 2400, false);
-          await saveLocalDrawing(matchProj.id, cached);
-        }
-      }
-
+      const cached = await getLocalDrawing(matchProj.id);
       if (cached) {
         const img = new Image();
         img.onload = () => {
@@ -554,7 +464,7 @@ export default function App() {
     redrawVisibleCanvas();
   };
 
-  // Background CAD GRID drawings (dynamic panning and zooming infinite grids with paper style presets)
+  // Background CAD GRID drawings (dynamic panning and zooming infinite grids)
   const drawBgCADGrid = () => {
     const gc = gridCanvasRef.current;
     if (!gc) return;
@@ -562,74 +472,11 @@ export default function App() {
     if (!gCtx) return;
 
     gCtx.clearRect(0, 0, gc.width, gc.height);
-    if (!gridVisible || paperGrid === 'plain') return;
-
     const sz = 30 * zoom; 
     if (sz < 5) return; // prevent zero/tiny division infinite loops
 
-    if (paperGrid === 'dots') {
-      gCtx.fillStyle = theme === 'light' ? 'rgba(0, 0, 0, 0.22)' : 'rgba(100, 150, 255, 0.35)';
-      const startX = panOffset.x % sz;
-      const startY = panOffset.y % sz;
-      for (let x = startX; x <= gc.width; x += sz) {
-        for (let y = startY; y <= gc.height; y += sz) {
-          gCtx.beginPath();
-          gCtx.arc(x, y, 1.2, 0, Math.PI * 2);
-          gCtx.fill();
-        }
-      }
-      return;
-    }
-
-    if (paperGrid === 'isometric') {
-      const lineCol = theme === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(100, 140, 240, 0.18)';
-      gCtx.strokeStyle = lineCol;
-      gCtx.lineWidth = 0.6;
-      
-      // Vertical lines
-      const startX = panOffset.x % sz;
-      for (let x = startX; x <= gc.width; x += sz) {
-        gCtx.beginPath();
-        gCtx.moveTo(x, 0);
-        gCtx.lineTo(x, gc.height);
-        gCtx.stroke();
-      }
-      // 30 degree diagonal lines
-      const diagStep = sz;
-      const totalWidth = gc.width + gc.height * 1.8;
-      const dStartX = (panOffset.x % diagStep) - gc.height;
-      for (let x = dStartX; x <= totalWidth; x += diagStep) {
-        gCtx.beginPath();
-        gCtx.moveTo(x, 0);
-        gCtx.lineTo(x + gc.height * 0.577, gc.height);
-        gCtx.stroke();
-
-        gCtx.beginPath();
-        gCtx.moveTo(x, 0);
-        gCtx.lineTo(x - gc.height * 0.577, gc.height);
-        gCtx.stroke();
-      }
-      return;
-    }
-
-    // Grid color styles based on paperGrid preset
-    let minorColor = 'rgba(100, 120, 200, 0.15)';
-    let majorColor = 'rgba(100, 120, 200, 0.28)';
-
-    if (paperGrid === 'blueprint') {
-      minorColor = 'rgba(56, 189, 248, 0.22)';
-      majorColor = 'rgba(56, 189, 248, 0.45)';
-    } else if (paperGrid === 'metric') {
-      minorColor = theme === 'light' ? 'rgba(16, 185, 129, 0.20)' : 'rgba(52, 211, 153, 0.22)';
-      majorColor = theme === 'light' ? 'rgba(16, 185, 129, 0.38)' : 'rgba(52, 211, 153, 0.42)';
-    } else {
-      // standard cad
-      minorColor = theme === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(100, 120, 200, 0.15)';
-      majorColor = theme === 'light' ? 'rgba(0, 0, 0, 0.16)' : 'rgba(100, 120, 200, 0.28)';
-    }
-
     // Small grids
-    gCtx.strokeStyle = minorColor;
+    gCtx.strokeStyle = 'rgba(100, 120, 200, 0.15)';
     gCtx.lineWidth = 0.5;
     const startX = panOffset.x % sz;
     for (let x = startX; x <= gc.width; x += sz) {
@@ -648,7 +495,7 @@ export default function App() {
 
     // Heavy main axes
     const heavySz = sz * 5;
-    gCtx.strokeStyle = majorColor;
+    gCtx.strokeStyle = 'rgba(100, 120, 200, 0.25)';
     gCtx.lineWidth = 0.8;
     const hStartX = panOffset.x % heavySz;
     for (let x = hStartX; x <= gc.width; x += heavySz) {
@@ -678,22 +525,23 @@ export default function App() {
   const takeSnapSnapshot = () => {
     initOffscreenCanvas();
     const canvas = offscreenCanvasRef.current;
-    if (!canvas || canvas.width === 0 || canvas.height === 0) return;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    try {
-      const snap = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      setHistory((prev) => {
-        const sliced = prev.slice(0, historyIndex + 1);
-        const updated = [...sliced, snap];
-        if (updated.length > 25) updated.shift();
-        return updated;
-      });
-      setHistoryIndex((prev) => Math.min(prev + 1, 24));
-    } catch (e) {
-      console.warn('Snapshot skipped:', e);
-    }
+    if (canvas.width === 0 || canvas.height === 0) return;
+
+    const snap = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    setHistory((prev) => {
+      const sliced = prev.slice(0, historyIndex + 1);
+      const updated = [...sliced, snap];
+      if (updated.length > 50) updated.shift();
+      return updated;
+    });
+    setHistoryIndex((prev) => {
+      const nextIndex = Math.min(historyIndex + 1, 49);
+      return nextIndex;
+    });
   };
 
   const handleUndo = () => {
@@ -731,68 +579,54 @@ export default function App() {
   };
 
   // Drawing event coordinate mapping helpers representing high-performance zooming and panning offsets
-  // Precise coordinate mapping from viewport client pixels to world canvas space
-  const clientToWorld = (clientX: number, clientY: number) => {
+  const getPointerPos = (
+    e: React.PointerEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
+    // Always map relative to the untransformed viewport container wrap element to prevent scale circular dependency
+    const parent = canvas.closest('#canvas-wrap') || canvas.parentElement || canvas;
+    const rect = parent.getBoundingClientRect();
+
+    let clientX = 0;
+    let clientY = 0;
+
+    const nativeEvent = e.nativeEvent;
+    if ('touches' in nativeEvent) {
+      if (nativeEvent.touches.length > 0) {
+        clientX = nativeEvent.touches[0].clientX;
+        clientY = nativeEvent.touches[0].clientY;
+      } else if (nativeEvent.changedTouches.length > 0) {
+        clientX = nativeEvent.changedTouches[0].clientX;
+        clientY = nativeEvent.changedTouches[0].clientY;
+      }
+    } else if (e.type.startsWith('pointer') || e.type.startsWith('mouse')) {
+      const ev = e as React.PointerEvent<HTMLCanvasElement>;
+      clientX = ev.clientX;
+      clientY = ev.clientY;
+    }
+
     const cx = clientX - rect.left;
     const cy = clientY - rect.top;
+
     return {
       x: (cx - panOffset.x) / zoom,
       y: (cy - panOffset.y) / zoom
     };
   };
 
-  const getPointerCoords = (
-    e: React.PointerEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
-  ) => {
-    let clientX = 0;
-    let clientY = 0;
-    let pressure = 1.0;
-
-    const nativeEvent = e.nativeEvent as any;
-    if ('touches' in nativeEvent && nativeEvent.touches && nativeEvent.touches.length > 0) {
-      clientX = nativeEvent.touches[0].clientX;
-      clientY = nativeEvent.touches[0].clientY;
-      if (typeof nativeEvent.touches[0].force === 'number' && nativeEvent.touches[0].force > 0) {
-        pressure = 0.75 + nativeEvent.touches[0].force * 0.5;
-      }
-    } else if ('clientX' in e && typeof e.clientX === 'number') {
-      clientX = e.clientX;
-      clientY = e.clientY;
-      if (typeof e.pressure === 'number' && e.pressure > 0 && e.pressure !== 0.5) {
-        pressure = 0.75 + e.pressure * 0.5;
-      }
-    } else if ('changedTouches' in nativeEvent && nativeEvent.changedTouches && nativeEvent.changedTouches.length > 0) {
-      clientX = nativeEvent.changedTouches[0].clientX;
-      clientY = nativeEvent.changedTouches[0].clientY;
-    }
-
-    const { x, y } = clientToWorld(clientX, clientY);
-    return { x, y, clientX, clientY, pressure };
-  };
-
-  // Backwards-compatible pos getter
-  const getPointerPos = (
-    e: React.PointerEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
-  ) => {
-    const coords = getPointerCoords(e);
-    return { x: coords.x, y: coords.y };
-  };
-
-  // 2. CANVAS DRAWING CODES - NATURAL PENCIL ON PAPER
+  // 2. CANVAS DRAWING CODES
   const onPointerDown = (
     e: React.PointerEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
   ) => {
     if (sidebarOpen) setSidebarOpen(false);
 
-    const nativeEvent = e.nativeEvent as any;
+    const nativeEvent = e.nativeEvent;
     
-    // Multi-touch gestures (pinch to zoom) take priority over drawing
+    // Prevent zoom/pinch gestures from triggering stray line drawing
     const hasMultipleTouches = 
       ('touches' in nativeEvent && nativeEvent.touches.length > 1) || 
-      (nativeEvent.touches && nativeEvent.touches.length > 1);
+      ((nativeEvent as any).touches && (nativeEvent as any).touches.length > 1);
     if (hasMultipleTouches) {
       cancelCurrentStroke();
       return;
@@ -802,23 +636,34 @@ export default function App() {
       e.preventDefault();
     }
 
-    // Capture pointer only for primary pointer on mouse or non-gesture touches
-    if ('pointerId' in e && e.isPrimary && (!e.pointerType || e.pointerType !== 'touch')) {
+    // Capture the pointer stream to keep receiving events even if dragged off canvas borders
+    if ('pointerId' in e) {
       try {
         (e.currentTarget as HTMLCanvasElement).setPointerCapture(e.pointerId);
       } catch (err) {}
     }
 
-    // If 'pan' tool mode is active, handle manual canvas pan offset navigation
+    // If 'pan' tool mode is active, handle custom canvas pan offset navigation
     if (currentTool === 'pan') {
-      const { clientX, clientY } = getPointerCoords(e);
+      let clientX = 0;
+      let clientY = 0;
+      if ('touches' in nativeEvent) {
+        if (nativeEvent.touches.length > 0) {
+          clientX = nativeEvent.touches[0].clientX;
+          clientY = nativeEvent.touches[0].clientY;
+        }
+      } else {
+        const ev = e as React.PointerEvent<HTMLCanvasElement>;
+        clientX = ev.clientX;
+        clientY = ev.clientY;
+      }
       isPanning.current = true;
       startPanPos.current = { x: clientX, y: clientY };
       initialPanOffset.current = { ...panOffset };
       return;
     }
 
-    const { x, y, pressure } = getPointerCoords(e);
+    const { x, y } = getPointerPos(e);
 
     if (currentTool === 'text') {
       setTextInputState({
@@ -830,60 +675,36 @@ export default function App() {
       return;
     }
 
+    setIsDrawing(true);
+    startPoints.current = { x, y };
+    lastPoint.current = { x, y };
+    lastMidPoint.current = { x, y };
+
     initOffscreenCanvas();
     const oCanvas = offscreenCanvasRef.current;
     if (!oCanvas) return;
     const oCtx = oCanvas.getContext('2d');
     if (!oCtx) return;
 
-    // Fast GPU-to-GPU texture snapshot for 0ms gesture rollback (no CPU readback stall!)
-    if (!rollbackCanvasRef.current) {
-      rollbackCanvasRef.current = document.createElement('canvas');
-      rollbackCanvasRef.current.width = oCanvas.width;
-      rollbackCanvasRef.current.height = oCanvas.height;
-    }
-    const rCtx = rollbackCanvasRef.current.getContext('2d');
-    if (rCtx) {
-      rCtx.clearRect(0, 0, oCanvas.width, oCanvas.height);
-      rCtx.drawImage(oCanvas, 0, 0);
-    }
-    hasRollback.current = true;
-
-    setIsDrawing(true);
-    strokePointCount.current = 0;
-    startPoints.current = { x, y };
-    lastPoint.current = { x, y };
-    lastMidPoint.current = { x, y };
+    // Snapshot pre-stroke canvas state so any accidental mark can be rolled back if a 2-finger gesture starts
+    activeStrokeRollback.current = oCtx.getImageData(0, 0, oCanvas.width, oCanvas.height);
 
     if (currentTool === 'pen' || currentTool === 'eraser') {
-      const isEraser = currentTool === 'eraser';
-      const bgHex = theme === 'light' ? '#ffffff' : '#fafaf8';
-      // Zoom-compensated radius so stroke thickness matches user selection on screen regardless of zoom
-      const markRadius = Math.max(0.6 / zoom, (isEraser ? (pencilSize * 1.5) / zoom : (pencilSize * 0.5) / zoom) * pressure);
-
-      // Imprint dot on backing canvas right at contact point
-      oCtx.save();
+      takeSnapSnapshot();
       oCtx.beginPath();
-      oCtx.arc(x, y, markRadius, 0, Math.PI * 2);
-      oCtx.fillStyle = isEraser ? bgHex : pencilColor;
+      oCtx.arc(
+        x,
+        y,
+        pencilSize * (currentTool === 'eraser' ? 1.5 : 0.5),
+        0,
+        Math.PI * 2
+      );
+      
+      const isLight = theme === 'light';
+      oCtx.fillStyle = currentTool === 'eraser' ? (isLight ? '#ffffff' : '#fafaf8') : pencilColor;
       oCtx.fill();
-      oCtx.restore();
 
-      // Immediate 0ms direct render on visible screen canvas for zero-latency tactile feedback
-      const sCanvas = canvasRef.current;
-      if (sCanvas) {
-        const sCtx = sCanvas.getContext('2d');
-        if (sCtx) {
-          const screenX = x * zoom + panOffset.x;
-          const screenY = y * zoom + panOffset.y;
-          sCtx.save();
-          sCtx.beginPath();
-          sCtx.arc(screenX, screenY, markRadius * zoom, 0, Math.PI * 2);
-          sCtx.fillStyle = isEraser ? bgHex : pencilColor;
-          sCtx.fill();
-          sCtx.restore();
-        }
-      }
+      redrawVisibleCanvas();
     } else {
       previewData.current = {} as ImageData; // truthy placeholder
     }
@@ -892,12 +713,12 @@ export default function App() {
   const onPointerMove = (
     e: React.PointerEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
   ) => {
-    const nativeEvent = e.nativeEvent as any;
+    const nativeEvent = e.nativeEvent;
     
     // Prevent zoom/pinch gestures from triggering stray line drawing
     const hasMultipleTouches = 
       ('touches' in nativeEvent && nativeEvent.touches.length > 1) || 
-      (nativeEvent.touches && nativeEvent.touches.length > 1);
+      ((nativeEvent as any).touches && (nativeEvent as any).touches.length > 1);
     if (hasMultipleTouches) {
       cancelCurrentStroke();
       return;
@@ -907,9 +728,21 @@ export default function App() {
       e.preventDefault();
     }
 
+    // Incorporate dynamic desktop/touch pointer drag updates for active map pan tool navigation
     if (currentTool === 'pan') {
       if (!isPanning.current) return;
-      const { clientX, clientY } = getPointerCoords(e);
+      let clientX = 0;
+      let clientY = 0;
+      if ('touches' in nativeEvent) {
+        if (nativeEvent.touches.length > 0) {
+          clientX = nativeEvent.touches[0].clientX;
+          clientY = nativeEvent.touches[0].clientY;
+        }
+      } else {
+        const ev = e as React.PointerEvent<HTMLCanvasElement>;
+        clientX = ev.clientX;
+        clientY = ev.clientY;
+      }
       const dx = clientX - startPanPos.current.x;
       const dy = clientY - startPanPos.current.y;
       setPanOffset({
@@ -920,7 +753,8 @@ export default function App() {
     }
 
     if (!isDrawing) return;
-
+    const { x, y } = getPointerPos(e);
+    
     initOffscreenCanvas();
     const oCanvas = offscreenCanvasRef.current;
     if (!oCanvas) return;
@@ -930,75 +764,39 @@ export default function App() {
     if (currentTool === 'pen' || currentTool === 'eraser') {
       const isEraser = currentTool === 'eraser';
       const bgHex = theme === 'light' ? '#ffffff' : '#fafaf8';
+      const strokeWidth = isEraser ? pencilSize * 3 : pencilSize;
 
-      // Collect all high-precision sub-frame touch points from coalesced events (120Hz/240Hz screens)
-      const points: { x: number; y: number; pressure: number }[] = [];
-      if (typeof nativeEvent?.getCoalescedEvents === 'function') {
-        const coalesced = nativeEvent.getCoalescedEvents();
-        if (coalesced && coalesced.length > 0) {
-          for (let i = 0; i < coalesced.length; i++) {
-            const cev = coalesced[i];
-            const coords = clientToWorld(cev.clientX, cev.clientY);
-            let p = 1.0;
-            if (typeof cev.pressure === 'number' && cev.pressure > 0 && cev.pressure !== 0.5) {
-              p = 0.75 + cev.pressure * 0.5;
-            }
-            points.push({ x: coords.x, y: coords.y, pressure: p });
-          }
-        }
-      }
-      if (points.length === 0) {
-        const coords = getPointerCoords(e);
-        points.push({ x: coords.x, y: coords.y, pressure: coords.pressure });
-      }
+      // Midpoint quadratic Bézier smoothing eliminates all sharp corners and polygonal facets
+      const midX = (lastPoint.current.x + x) / 2;
+      const midY = (lastPoint.current.y + y) / 2;
 
-      // Draw continuous Bézier spline connecting directly from initial touch point
-      for (let i = 0; i < points.length; i++) {
-        const pt = points[i];
-        const dist = Math.hypot(pt.x - lastPoint.current.x, pt.y - lastPoint.current.y);
-        if (dist < 0.25 && strokePointCount.current > 0) continue;
+      oCtx.beginPath();
+      oCtx.moveTo(lastMidPoint.current.x, lastMidPoint.current.y);
+      oCtx.quadraticCurveTo(lastPoint.current.x, lastPoint.current.y, midX, midY);
+      oCtx.lineWidth = strokeWidth;
+      oCtx.lineCap = 'round';
+      oCtx.lineJoin = 'round';
+      oCtx.strokeStyle = isEraser ? bgHex : pencilColor;
+      oCtx.stroke();
 
-        const midX = (lastPoint.current.x + pt.x) / 2;
-        const midY = (lastPoint.current.y + pt.y) / 2;
-        // World stroke width compensated by zoom factor for crisp screen reproduction
-        const strokeW = Math.max(0.75 / zoom, (isEraser ? (pencilSize * 3) / zoom : pencilSize / zoom) * pt.pressure);
-
-        oCtx.beginPath();
-        oCtx.lineWidth = strokeW;
-        oCtx.lineCap = 'round';
-        oCtx.lineJoin = 'round';
-        oCtx.strokeStyle = isEraser ? bgHex : pencilColor;
-
-        if (strokePointCount.current === 0) {
-          // First segment: draw seamless line connecting from the exact contact point
-          oCtx.moveTo(lastPoint.current.x, lastPoint.current.y);
-          oCtx.lineTo(midX, midY);
-        } else {
-          // Subsequent segments: smooth Bézier curve through midpoints
-          oCtx.moveTo(lastMidPoint.current.x, lastMidPoint.current.y);
-          oCtx.quadraticCurveTo(lastPoint.current.x, lastPoint.current.y, midX, midY);
-        }
-        oCtx.stroke();
-
-        lastMidPoint.current = { x: midX, y: midY };
-        lastPoint.current = { x: pt.x, y: pt.y };
-        strokePointCount.current++;
-      }
+      lastMidPoint.current = { x: midX, y: midY };
+      lastPoint.current = { x, y };
+      startPoints.current = { x, y };
 
       redrawVisibleCanvas();
     } else if (previewData.current) {
-      const { x, y } = getPointerCoords(e);
+      // Direct shapes preview: clear and draw base offscreen drawing, then active shape outline
       const canvas = canvasRef.current;
       if (canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           redrawVisibleCanvas();
+          // Draw previewing shape in screen coordinate space
           const screenStartX = startPoints.current.x * zoom + panOffset.x;
           const screenStartY = startPoints.current.y * zoom + panOffset.y;
           const screenEndX = x * zoom + panOffset.x;
           const screenEndY = y * zoom + panOffset.y;
-          // Live preview is drawn directly in screen coordinates, so lineWidth is pencilSize
-          drawVectorShape(ctx, currentTool, screenStartX, screenStartY, screenEndX, screenEndY, pencilSize);
+          drawVectorShape(ctx, currentTool, screenStartX, screenStartY, screenEndX, screenEndY, pencilSize * zoom);
         }
       }
     }
@@ -1011,6 +809,7 @@ export default function App() {
       e.preventDefault();
     }
 
+    // Release the pointer capture safely
     if ('pointerId' in e) {
       try {
         (e.currentTarget as HTMLCanvasElement).releasePointerCapture(e.pointerId);
@@ -1034,33 +833,30 @@ export default function App() {
     if (currentTool === 'pen' || currentTool === 'eraser') {
       const isEraser = currentTool === 'eraser';
       const bgHex = theme === 'light' ? '#ffffff' : '#fafaf8';
+      const strokeWidth = isEraser ? pencilSize * 3 : pencilSize;
 
-      // If finger moved, finish curve to the final release point cleanly
-      if (strokePointCount.current > 0) {
-        oCtx.beginPath();
-        oCtx.moveTo(lastMidPoint.current.x, lastMidPoint.current.y);
-        oCtx.lineTo(lastPoint.current.x, lastPoint.current.y);
-        oCtx.lineWidth = Math.max(0.75 / zoom, (isEraser ? pencilSize * 3 : pencilSize) / zoom);
-        oCtx.lineCap = 'round';
-        oCtx.lineJoin = 'round';
-        oCtx.strokeStyle = isEraser ? bgHex : pencilColor;
-        oCtx.stroke();
-      }
+      oCtx.beginPath();
+      oCtx.moveTo(lastMidPoint.current.x, lastMidPoint.current.y);
+      oCtx.lineTo(lastPoint.current.x, lastPoint.current.y);
+      oCtx.lineWidth = strokeWidth;
+      oCtx.lineCap = 'round';
+      oCtx.lineJoin = 'round';
+      oCtx.strokeStyle = isEraser ? bgHex : pencilColor;
+      oCtx.stroke();
 
       redrawVisibleCanvas();
-      // Record undo snapshot upon completing stroke
-      takeSnapSnapshot();
     } else {
-      const { x, y } = getPointerCoords(e);
+      const { x, y } = getPointerPos(e);
       if (previewData.current) {
-        // Pass pencilSize / zoom so world shape width displays at exact selected pencilSize on screen
-        drawVectorShape(oCtx, currentTool, startPoints.current.x, startPoints.current.y, x, y, pencilSize / zoom);
+        // Create rollback snapshot BEFORE shape is burned
+        takeSnapSnapshot();
+        // Permanently draw shape in world coordinate space
+        drawVectorShape(oCtx, currentTool, startPoints.current.x, startPoints.current.y, x, y);
         previewData.current = null;
         redrawVisibleCanvas();
-        takeSnapSnapshot();
       }
     }
-    hasRollback.current = false;
+    activeStrokeRollback.current = null;
     triggerQuickAutoSaveDelay();
   };
 
@@ -1113,6 +909,7 @@ export default function App() {
         ex - hw * Math.cos(angle + Math.PI / 6),
         ey - hw * Math.sin(angle + Math.PI / 6)
       );
+      ctx.stroke();
     }
   };
 
@@ -1156,7 +953,8 @@ export default function App() {
       const oCtx = oCanvas.getContext('2d');
       if (oCtx) {
         takeSnapSnapshot();
-        oCtx.clearRect(0, 0, oCanvas.width, oCanvas.height);
+        oCtx.fillStyle = theme === 'light' ? '#ffffff' : '#fafaf8';
+        oCtx.fillRect(0, 0, oCanvas.width, oCanvas.height);
         redrawVisibleCanvas();
         showToast('Draft space cleared');
         triggerQuickAutoSaveDelay();
@@ -1240,9 +1038,6 @@ export default function App() {
     if (name === currentProject) return;
     await handleSilentAutoSave(); // Save current project first
 
-    setPanOffset({ x: 0, y: 0 });
-    setZoom(1.0);
-    setTool('pen');
     setCurrentProject(name);
     localStorage.setItem('voxpad_current', name);
     showToast(`Loaded "${name}" Successfully!`, 'success');
@@ -1270,9 +1065,6 @@ export default function App() {
       [name]: newProj
     }));
 
-    setPanOffset({ x: 0, y: 0 });
-    setZoom(1.0);
-    setTool('pen');
     setCurrentProject(name);
     localStorage.setItem('voxpad_current', name);
     showToast(`Created Project "${name}"`, 'success');
@@ -1501,45 +1293,31 @@ export default function App() {
     }
   };
 
-  const getExportDataUrl = (): string => {
-    initOffscreenCanvas();
-    const source = offscreenCanvasRef.current || canvasRef.current;
-    if (!source) return '';
-    const exp = document.createElement('canvas');
-    exp.width = source.width;
-    exp.height = source.height;
-    const eCtx = exp.getContext('2d');
-    if (!eCtx) return source.toDataURL('image/png');
-    eCtx.fillStyle = '#ffffff';
-    eCtx.fillRect(0, 0, exp.width, exp.height);
-    eCtx.drawImage(source, 0, 0);
-    return exp.toDataURL('image/png');
-  };
-
   // Native share sheet handles
   const handleNativeShare = async () => {
-    const dataUrl = getExportDataUrl();
-    if (!dataUrl) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
     if (navigator.share) {
       try {
-        const res = await fetch(dataUrl);
-        const blob = await res.blob();
-        const file = new File([blob], `${currentProject}.png`, { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: `Architectural drawing: ${currentProject}`,
-            text: `Architectural CAD drawing from Arch Pad Pro.`
-          });
-        } else {
-          await navigator.share({
-            title: `Architectural drawing: ${currentProject}`,
-            text: `Architectural CAD drawing from Arch Pad Pro.`
-          });
-        }
+        canvas.toBlob(async (blob) => {
+          if (!blob) return;
+          const file = new File([blob], `${currentProject}.png`, { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: `Sketch plan of ${currentProject}`,
+              text: `Check out my drafting plans on Arch Pad Sketchbook!`
+            });
+          } else {
+            await navigator.share({
+              title: `Architectural sketch: ${currentProject}`,
+              text: 'Uploaded from my local PWA drafting client.'
+            });
+          }
+        });
       } catch (err) {
-        // Fallback download if user cancels share dialog
+        // Standard user cancellation fallback download
         handleTriggerWebDownload();
       }
     } else {
@@ -1548,17 +1326,31 @@ export default function App() {
   };
 
   const handleTriggerWebDownload = () => {
-    const dataUrl = getExportDataUrl();
-    if (dataUrl) {
+    initOffscreenCanvas();
+    const canvas = offscreenCanvasRef.current || canvasRef.current;
+    if (canvas) {
       const link = document.createElement('a');
       link.download = `${currentProject}.png`;
-      link.href = dataUrl;
+      link.href = canvas.toDataURL('image/png');
       link.click();
-      showToast('Drawing exported as PNG');
+      showToast('Image exported as PNG');
     }
   };
 
-
+  const handleTriggerInstall = () => {
+    if (pwaPrompt) {
+      pwaPrompt.prompt();
+      pwaPrompt.userChoice.then((choice: any) => {
+        if (choice.outcome === 'accepted') {
+          showToast('App added standalone local!', 'success');
+        }
+        setPwaPrompt(null);
+      });
+    } else {
+      setActiveModal('info-modal');
+      showToast('To install, open Safari menu and select "Add to Home Screen"!', 'info');
+    }
+  };
 
   return (
     <>
@@ -1609,7 +1401,7 @@ export default function App() {
             {/* Offline or Syncing status badge */}
             {!isOnline && (
               <span
-                title="Working in offline mode. Drawings are saved safely on device and will synchronize once reconnected."
+                title="Working in offline mode. Changes are automatically saved to IndexedDB and will sync once reconnected."
                 className="bg-amber-500/15 border border-amber-500/30 text-amber-400 font-mono text-[9px] font-bold px-2 py-1 rounded-[6px] select-none flex items-center gap-1"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
@@ -1625,11 +1417,15 @@ export default function App() {
               </span>
             )}
 
-            {/* Native CAD Architecture Suite badge */}
-            <span className="hidden xs:inline-flex bg-[#4f8ef7]/15 border border-[#4f8ef7]/30 text-[#4f8ef7] font-mono text-[9px] font-bold px-2 py-1 rounded-[6px] select-none items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#4f8ef7]"></span>
-              CAD V2.0
-            </span>
+            {/* Native Install Prompt Indicator */}
+            {pwaPrompt && (
+              <button
+                onClick={handleTriggerInstall}
+                className="hdr-btn bg-gradient-to-r from-[#4f8ef7]/20 to-[#7c5cf7]/20 border border-[#7c5cf7]/40 text-[#4f8ef7] font-semibold text-[10px] p-[5px_8px] rounded-[6px] cursor-pointer"
+              >
+                📥 Install
+              </button>
+            )}
             <button
               className="hdr-btn bg-[var(--bg3)] border border-[var(--border2)] text-[var(--text)] font-mono text-[10px] font-bold p-[5px_8px] rounded-[6px] cursor-pointer hover:bg-[var(--bg4)]"
               onClick={handleToggleFullscreen}
@@ -1667,8 +1463,6 @@ export default function App() {
         <Toolbar
           currentTool={currentTool}
           setTool={setTool}
-          paperGrid={paperGrid}
-          setPaperGrid={setPaperGrid}
           pencilSize={pencilSize}
           setPencilSize={setPencilSize}
           setPencilNamedColor={(name) => {
@@ -1743,6 +1537,8 @@ export default function App() {
           onSignOut={handleSignOut}
           isCloudSyncing={isCloudSyncing}
           triggerForceCloudSync={triggerForceCloudSync}
+          pwaPrompt={pwaPrompt}
+          onTriggerInstall={handleTriggerInstall}
           projects={projects}
           currentProject={currentProject}
           onSwitchProject={handleSwitchProject}

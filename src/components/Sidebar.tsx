@@ -23,6 +23,8 @@ interface SidebarProps {
   onSignOut: () => void;
   isCloudSyncing: boolean;
   triggerForceCloudSync: () => void;
+  pwaPrompt: any;
+  onTriggerInstall: () => void;
   projects: Record<string, Project>;
   currentProject: string;
   onSwitchProject: (id: string) => void;
@@ -51,6 +53,8 @@ export default function Sidebar({
   onSignOut,
   isCloudSyncing,
   triggerForceCloudSync,
+  pwaPrompt,
+  onTriggerInstall,
   projects,
   currentProject,
   onSwitchProject,
@@ -72,6 +76,13 @@ export default function Sidebar({
     setCollapsed((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
+  // Check if iOS standalone installation can be promoted
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || ('standalone' in window.navigator && (window.navigator as any).standalone);
+  const showIosInstallBtn = isIOS && !isStandalone;
+
+  const showInstall = !!pwaPrompt || showIosInstallBtn;
+
   return (
     <>
       {/* Sidebar Overlay */}
@@ -87,7 +98,7 @@ export default function Sidebar({
       {/* Sidebar Container */}
       <div
         id="sidebar"
-        className={`fixed top-0 left-0 bottom-0 w-[270px] z-[301] bg-[var(--bg2)] border-r border-[var(--border2)] flex flex-col overflow-y-auto select-none touch-pan-y transition-transform duration-280 cubic-bezier(0.4, 0, 0.2, 1) ${
+        className={`fixed top-0 left-0 bottom-0 w-[270px] z-[301] bg-[var(--bg2)] border-r border-[var(--border2)] flex flex-col overflow-y-auto transition-transform duration-280 cubic-bezier(0.4, 0, 0.2, 1) ${
           isOpen ? 'translate-x-0 open' : '-translate-x-full'
         }`}
       >
@@ -96,7 +107,7 @@ export default function Sidebar({
             <img src={appIconSvg} alt="Arch Pad Icon" className="w-full h-full block" />
           </div>
           <div className="sb-title font-sans text-[17px] font-[800] bg-gradient-to-r from-[#4f8ef7] to-[#7c5cf7] bg-clip-text text-transparent select-none">
-            Arch Pad Pro
+            Arch Pad
           </div>
           <button
             className="sb-close ml-auto bg-none border-none text-[var(--text3)] text-[20px] cursor-pointer p-[2px_6px] rounded-[4px] leading-none hover:text-[var(--text)] hover:bg-[var(--bg3)]"
@@ -152,7 +163,7 @@ export default function Sidebar({
             ) : (
               <div className="p-2.5 mb-2 bg-[#1a1a2e]/20 border border-[var(--border)] rounded-lg text-xs">
                 <p className="text-[var(--text3)] text-[10px] leading-relaxed mb-2 font-mono">
-                  On-device encrypted CAD workspace active. Sign in to synchronize blueprints across devices.
+                  IndexedDB local storage active. Sign in to synchronize drawings with Google Cloud across devices.
                 </p>
                 <button
                   onClick={() => {
@@ -494,7 +505,7 @@ export default function Sidebar({
             >
               <span className="sb-ico text-[15px] w-[20px] text-center shrink-0">↩</span>
               <span className="sb-lbl text-[12px] font-[600] flex-1">Undo</span>
-              <span className="sb-sub text-[9px] text-[var(--text3)] font-mono">STEP</span>
+              <span className="sb-sub text-[9px] text-[var(--text2)] font-mono">Ctrl+Z</span>
             </div>
             <div
               className="sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none text-[var(--text)] transition-colors"
@@ -505,7 +516,7 @@ export default function Sidebar({
             >
               <span className="sb-ico text-[15px] w-[20px] text-center shrink-0">↪</span>
               <span className="sb-lbl text-[12px] font-[600] flex-1">Redo</span>
-              <span className="sb-sub text-[9px] text-[var(--text3)] font-mono">STEP</span>
+              <span className="sb-sub text-[9px] text-[var(--text2)] font-mono">Ctrl+Y</span>
             </div>
             <div
               className="sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none text-[var(--text)] transition-colors"
@@ -516,7 +527,7 @@ export default function Sidebar({
             >
               <span className="sb-ico text-[15px] w-[20px] text-center shrink-0">💾</span>
               <span className="sb-lbl text-[12px] font-[600] flex-1">Save Project</span>
-              <span className="sb-sub text-[9px] text-emerald-400 font-mono">SAVED</span>
+              <span className="sb-sub text-[9px] text-[var(--text2)] font-mono">Ctrl+S</span>
             </div>
             <div
               className="sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none text-[var(--text)] transition-colors"
@@ -595,6 +606,20 @@ export default function Sidebar({
                 ◗ Dark
               </button>
             </div>
+
+            {/* PWA Home screen Promotion Trigger Button */}
+            {showInstall && (
+              <div
+                className="sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer border border-[#4f8ef7]/30 bg-[#4f8ef7]/8 select-none text-[var(--text)] transition-all hover:bg-[#4f8ef7]/15 mt-1"
+                onClick={onTriggerInstall}
+              >
+                <span className="sb-ico text-[15px] w-[20px] text-center shrink-0 text-[var(--accent)] font-[700]">⊕</span>
+                <div className="flex flex-col flex-1 leading-normal">
+                  <span className="sb-lbl text-[11px] font-[700] text-[var(--accent)]">Install App</span>
+                  <span className="text-[8px] text-[var(--text3)] font-mono">Add to Home Screen</span>
+                </div>
+              </div>
+            )}
 
             <div
               className="sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none text-[var(--text)] transition-colors"
