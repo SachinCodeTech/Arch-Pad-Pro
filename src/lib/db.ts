@@ -55,15 +55,24 @@ export function getDB(): Promise<IDBDatabase> {
       };
 
       request.onsuccess = () => {
-        resolve(request.result);
+        const db = request.result;
+        db.onversionchange = () => {
+          db.close();
+          dbPromise = null;
+        };
+        db.onclose = () => {
+          dbPromise = null;
+        };
+        resolve(db);
       };
 
       request.onerror = () => {
-        idbAvailable = false;
+        dbPromise = null;
         reject(request.error || new Error('Failed to open IndexedDB'));
       };
 
       request.onblocked = () => {
+        dbPromise = null;
         console.warn('IndexedDB upgrade blocked, working with fallback');
       };
     } catch (e) {

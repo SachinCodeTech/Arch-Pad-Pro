@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { ToolType, ThemeType, Project } from '../types';
 
 interface SidebarProps {
@@ -81,7 +82,7 @@ export default function Sidebar({
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || ('standalone' in window.navigator && (window.navigator as any).standalone);
   const showIosInstallBtn = isIOS && !isStandalone;
 
-  const showInstall = !!pwaPrompt || showIosInstallBtn;
+  const showInstall = !Capacitor.isNativePlatform() && (!!pwaPrompt || showIosInstallBtn);
 
   return (
     <>

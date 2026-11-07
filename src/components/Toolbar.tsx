@@ -474,14 +474,21 @@ export default function Toolbar({
 
         {/* Floating Zoom / Pan Controls right of Tool: +  -  🖐️ */}
         <div className="flex items-center gap-2">
-          {/* Zoom In button */}
+          {/* Zoom In button (up to 500%) */}
           <button
-            title="Zoom In"
+            title="Zoom In (up to 500%)"
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               const oldZoom = zoom;
-              const newZoom = Math.min(Math.round((oldZoom + 0.15) * 100) / 100, 3.0);
+              let step = 0.25;
+              if (oldZoom < 0.2) step = 0.05;
+              else if (oldZoom < 0.5) step = 0.1;
+              else if (oldZoom < 1.0) step = 0.15;
+              else if (oldZoom < 2.0) step = 0.25;
+              else step = 0.5;
+
+              const newZoom = Math.min(Math.round((oldZoom + step) * 100) / 100, 5.0);
               if (newZoom === oldZoom) return;
               const cx = window.innerWidth / 2;
               const cy = window.innerHeight / 2;
@@ -503,19 +510,26 @@ export default function Toolbar({
               setZoom(1.0);
               setPanOffset({ x: 0, y: 0 });
             }}
-            className="text-[8px] font-mono font-[800] text-center text-[#5a73a3] hover:text-[#4f8ef7] cursor-pointer select-none min-w-[30px] transition"
+            className="text-[8px] font-mono font-[800] text-center text-[#5a73a3] hover:text-[#4f8ef7] cursor-pointer select-none min-w-[34px] transition"
           >
             {Math.round(zoom * 100)}%
           </span>
 
-          {/* Zoom Out button */}
+          {/* Zoom Out button (down to 5%) */}
           <button
-            title="Zoom Out"
+            title="Zoom Out (down to 5%)"
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               const oldZoom = zoom;
-              const newZoom = Math.max(Math.round((oldZoom - 0.15) * 100) / 100, 0.4);
+              let step = 0.25;
+              if (oldZoom <= 0.2) step = 0.05;
+              else if (oldZoom <= 0.5) step = 0.1;
+              else if (oldZoom <= 1.0) step = 0.15;
+              else if (oldZoom <= 2.0) step = 0.25;
+              else step = 0.5;
+
+              const newZoom = Math.max(Math.round((oldZoom - step) * 100) / 100, 0.05);
               if (newZoom === oldZoom) return;
               const cx = window.innerWidth / 2;
               const cy = window.innerHeight / 2;
@@ -528,6 +542,20 @@ export default function Toolbar({
             className="w-[20px] h-[20px] flex items-center justify-center font-sans text-[11px] font-[900] bg-[var(--bg3)] hover:bg-[var(--bg4)] border border-[var(--border2)] rounded-[4px] text-white hover:scale-[1.05] active:scale-[0.95] transition cursor-pointer"
           >
             －
+          </button>
+
+          {/* FIT / Reset Button */}
+          <button
+            title="Fit / Reset to 100%"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setZoom(1.0);
+              setPanOffset({ x: 0, y: 0 });
+            }}
+            className="h-[20px] px-1 flex items-center justify-center font-mono text-[8px] font-[800] bg-[var(--bg3)] hover:bg-[var(--bg4)] border border-[var(--border2)] rounded-[4px] text-[#4f8ef7] hover:scale-[1.05] active:scale-[0.95] transition cursor-pointer"
+          >
+            FIT
           </button>
 
           {/* Mini Separator */}

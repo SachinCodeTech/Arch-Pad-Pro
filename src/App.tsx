@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import Splash from './components/Splash';
 import Sidebar from './components/Sidebar';
 import CanvasArea from './components/CanvasArea';
@@ -327,7 +328,16 @@ export default function App() {
           });
         }
       } catch (err) {
-        console.error('Error opening local database stores:', err);
+        console.error('Error opening local database stores, starting with fallback sketch:', err);
+        const fallbackProject: Project = {
+          id: 'Sketch_1',
+          name: 'Sketch 1',
+          created: Date.now(),
+          modified: Date.now(),
+          scale: '1:100'
+        };
+        setProjects({ [fallbackProject.name]: fallbackProject });
+        setCurrentProject(fallbackProject.name);
       }
     };
     fetchLocal();
@@ -440,6 +450,10 @@ export default function App() {
         const img = new Image();
         img.onload = () => {
           oCtx.drawImage(img, 0, 0);
+          takeSnapSnapshot();
+          redrawVisibleCanvas();
+        };
+        img.onerror = () => {
           takeSnapSnapshot();
           redrawVisibleCanvas();
         };
@@ -1540,7 +1554,7 @@ export default function App() {
             )}
 
             {/* Native Install Prompt Indicator */}
-            {pwaPrompt && (
+            {!Capacitor.isNativePlatform() && pwaPrompt && (
               <button
                 onClick={handleTriggerInstall}
                 className="hdr-btn bg-gradient-to-r from-[#4f8ef7]/20 to-[#7c5cf7]/20 border border-[#7c5cf7]/40 text-[#4f8ef7] font-semibold text-[10px] p-[5px_8px] rounded-[6px] cursor-pointer"
