@@ -1,6 +1,7 @@
-/* Arch Pad Pro Service Worker - Comprehensive Offline Engine & Asset Caching */
-const STATIC_CACHE = 'arch-pad-static-v2';
-const RUNTIME_CACHE = 'arch-pad-runtime-v2';
+/* Arch Pad Pro Service Worker - Comprehensive 100% Native Offline Engine */
+const STATIC_CACHE = 'arch-pad-static-v4';
+const RUNTIME_CACHE = 'arch-pad-runtime-v4';
+const FONTS_CACHE = 'arch-pad-fonts-v4';
 
 // Core UI shell & offline fallback assets
 const PRECACHE_ASSETS = [
@@ -67,7 +68,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== STATIC_CACHE && name !== RUNTIME_CACHE)
+          .filter((name) => name !== STATIC_CACHE && name !== RUNTIME_CACHE && name !== FONTS_CACHE)
           .map((name) => caches.delete(name))
       );
     }).then(() => self.clients.claim())
@@ -80,7 +81,7 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  // Bypass Google Firebase, Auth, and Cloud sync endpoints so SDK manages its own state
+  // Bypass Google Firebase and Auth endpoints so SDK manages its own state
   if (
     url.hostname.includes('firestore.googleapis.com') ||
     url.hostname.includes('firebase') ||
@@ -91,29 +92,72 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 1. Navigation requests (HTML SPA shell) - Network First with immediate Offline Cache Fallback
-  if (req.mode === 'navigate') {
+  // Handle Google Fonts offline caching
+  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
     event.respondWith(
-      fetch(req)
-        .then((networkResponse) => {
+      caches.open(FONTS_CACHE).then(async (cache) => {
+        const cached = await cache.match(req);
+        if (cached) return cached;
+        try {
+          const networkResponse = await fetch(req);
           if (networkResponse && networkResponse.ok) {
-            const cloned = networkResponse.clone();
-            caches.open(STATIC_CACHE).then((cache) => {
-              cache.put('/index.html', cloned);
-            });
+            cache.put(req, networkResponse.clone());
           }
           return networkResponse;
-        })
-        .catch(() => {
-          return caches.match('/index.html').then((cachedIndex) => {
-            return cachedIndex || caches.match('/');
-          });
-        })
+        } catch (e) {
+          return cached || new Response('', { status: 408 });
+        }
+      })
     );
     return;
   }
 
-  // 2. Drawing engine scripts, UI styles, fonts, and assets - Cache-First / Stale-While-Revalidate
+  // 1. Navigation requests (HTML SPA shell) - Aeroplane mode & offline instant load
+  if (req.mode === 'navigate' || req.destination === 'document') {
+    event.respondWith(
+      (async () => {
+        // If device is offline, serve from cache immediately without network lag
+        if (!navigator.onLine) {
+          const cachedIndex = (await caches.match('/index.html')) || (await caches.match('/'));
+          if (cachedIndex) return cachedIndex;
+        }
+
+        // When online or checking network, use fast race or fallback
+        try {
+          // Timeout fetch after 1500ms to guarantee instant app start in flaky network/aeroplane mode
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 1500);
+
+          const networkResponse = await fetch(req, { signal: controller.signal });
+          clearTimeout(timeoutId);
+
+          if (networkResponse && networkResponse.ok) {
+            const clone = networkResponse.clone();
+            caches.open(STATIC_CACHE).then((cache) => {
+              cache.put('/index.html', clone.clone());
+              cache.put('/', clone);
+            });
+            return networkResponse;
+          }
+        } catch (err) {
+          // Network failed or timed out (Aeroplane mode)
+        }
+
+        // Return cached HTML shell
+        const cached = (await caches.match('/index.html')) || (await caches.match('/'));
+        if (cached) return cached;
+
+        // Ultimate offline fallback if cache was just cleared
+        return new Response(
+          '<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Arch Pad</title></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>',
+          { headers: { 'Content-Type': 'text/html' } }
+        );
+      })()
+    );
+    return;
+  }
+
+  // 2. Application scripts, styles, modules, and assets - Cache-First for 100% native performance
   const isStaticAsset =
     url.origin === self.location.origin &&
     (url.pathname.startsWith('/assets/') ||
@@ -121,6 +165,8 @@ self.addEventListener('fetch', (event) => {
       url.pathname.startsWith('/screenshots/') ||
       url.pathname.startsWith('/src/') ||
       url.pathname.endsWith('.js') ||
+      url.pathname.endsWith('.ts') ||
+      url.pathname.endsWith('.tsx') ||
       url.pathname.endsWith('.css') ||
       url.pathname.endsWith('.svg') ||
       url.pathname.endsWith('.png') ||
@@ -132,40 +178,52 @@ self.addEventListener('fetch', (event) => {
   if (isStaticAsset) {
     event.respondWith(
       caches.match(req).then((cachedResponse) => {
-        // If found in cache, serve immediately while revalidating in background
-        const fetchPromise = fetch(req)
+        // Return instantly from cache if available (native speed in aeroplane mode)
+        if (cachedResponse) {
+          // In the background if online, revalidate and update cache
+          if (navigator.onLine) {
+            fetch(req)
+              .then((networkResponse) => {
+                if (networkResponse && networkResponse.status === 200) {
+                  const clone = networkResponse.clone();
+                  caches.open(RUNTIME_CACHE).then((cache) => cache.put(req, clone));
+                }
+              })
+              .catch(() => {});
+          }
+          return cachedResponse;
+        }
+
+        // Not in cache: fetch from network and store
+        return fetch(req)
           .then((networkResponse) => {
             if (networkResponse && networkResponse.status === 200) {
               const clone = networkResponse.clone();
-              caches.open(RUNTIME_CACHE).then((cache) => {
-                cache.put(req, clone);
-              });
+              caches.open(RUNTIME_CACHE).then((cache) => cache.put(req, clone));
             }
             return networkResponse;
           })
-          .catch(() => cachedResponse);
-
-        return cachedResponse || fetchPromise;
+          .catch(() => {
+            return cachedResponse || new Response('', { status: 408 });
+          });
       })
     );
     return;
   }
 
-  // 3. Fallback for all other GET requests: try cache first, then network
+  // 3. Fallback for all other GET requests: Cache-First then Network
   event.respondWith(
     caches.match(req).then((cached) => {
-      return (
-        cached ||
-        fetch(req).then((netRes) => {
+      if (cached) return cached;
+      return fetch(req)
+        .then((netRes) => {
           if (netRes && (netRes.status === 200 || netRes.type === 'opaque')) {
             const clone = netRes.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(req, clone);
-            });
+            caches.open(RUNTIME_CACHE).then((cache) => cache.put(req, clone));
           }
           return netRes;
         })
-      );
+        .catch(() => cached || new Response('', { status: 408 }));
     })
   );
 });

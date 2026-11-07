@@ -15,7 +15,24 @@ export interface Drawing {
   userId?: string;
 }
 
-export type ToolType = 'pen' | 'eraser' | 'text' | 'line' | 'rect' | 'circle' | 'arrow' | 'pan';
+export type ToolType = 
+  | 'pen' 
+  | 'eraser' 
+  | 'text' 
+  | 'line' 
+  | 'rect' 
+  | 'circle' 
+  | 'arrow' 
+  | 'pan';
+
+export type PaperGridType = 'cad' | 'blueprint' | 'metric' | 'isometric' | 'dots' | 'plain';
+
+export interface CadLayer {
+  id: string;
+  name: string;
+  visible: boolean;
+  locked: boolean;
+}
 
 export type ThemeType = 'light' | 'dark';
 

@@ -1,6 +1,17 @@
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer, collection, getDocs, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  getDocFromServer,
+  collection,
+  query,
+  where,
+  getDocs,
+  setDoc,
+  deleteDoc
+} from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Project, Drawing } from '../types';
 
@@ -62,8 +73,8 @@ async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn("Please check your Firebase configuration or network status.");
+    if (error instanceof Error && (error.message.includes('the client is offline') || (error as any).code === 'unavailable')) {
+      console.info("Firestore client operating in offline mode.");
     }
   }
 }
@@ -71,26 +82,25 @@ testConnection();
 
 // Cloud Firebase Data Fetching
 export async function getCloudProjects(userId: string): Promise<Project[]> {
+  const path = 'projects';
   try {
-    const qDoc = collection(db, 'projects');
-    const snapshot = await getDocs(qDoc);
+    const q = query(collection(db, path), where('userId', '==', userId));
+    const snapshot = await getDocs(q);
     const list: Project[] = [];
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
-      if (data.userId === userId) {
-        list.push({
-          id: data.id,
-          name: data.name,
-          created: data.created,
-          modified: data.modified,
-          scale: data.scale,
-          userId: data.userId
-        });
-      }
+      list.push({
+        id: data.id,
+        name: data.name,
+        created: data.created,
+        modified: data.modified,
+        scale: data.scale,
+        userId: data.userId
+      });
     });
     return list;
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, 'projects');
+    handleFirestoreError(error, OperationType.LIST, path);
   }
 }
 
@@ -101,8 +111,8 @@ export async function uploadProjectToCloud(userId: string, project: Project, can
       id: project.id,
       userId,
       name: project.name,
-      created: project.created,
-      modified: project.modified,
+      created: Math.round(project.created),
+      modified: Math.round(project.modified),
       scale: project.scale
     };
     await setDoc(projRef, updatedProj);
@@ -112,7 +122,7 @@ export async function uploadProjectToCloud(userId: string, project: Project, can
       projectId: project.id,
       userId,
       canvasData: canvasData || '',
-      modified: project.modified
+      modified: Math.round(project.modified)
     };
     await setDoc(drawRef, updatedDraw);
   } catch (error) {
@@ -121,15 +131,16 @@ export async function uploadProjectToCloud(userId: string, project: Project, can
 }
 
 export async function getCloudDrawing(projectId: string): Promise<string> {
+  const path = `drawings/${projectId}`;
   try {
     const qDoc = doc(db, 'drawings', projectId);
-    const snapshot = await getDocFromServer(qDoc);
+    const snapshot = await getDoc(qDoc);
     if (snapshot.exists()) {
       return snapshot.data().canvasData || '';
     }
     return '';
   } catch (error) {
-    handleFirestoreError(error, OperationType.GET, `drawings/${projectId}`);
+    handleFirestoreError(error, OperationType.GET, path);
   }
 }
 

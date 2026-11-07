@@ -496,7 +496,15 @@ export default function Toolbar({
             ＋
           </button>
           
-          <span className="text-[8px] font-mono font-[800] text-center text-[#5a73a3] select-none min-w-[30px]">
+          <span 
+            title="Click to reset zoom to 100%"
+            onClick={(e) => {
+              e.stopPropagation();
+              setZoom(1.0);
+              setPanOffset({ x: 0, y: 0 });
+            }}
+            className="text-[8px] font-mono font-[800] text-center text-[#5a73a3] hover:text-[#4f8ef7] cursor-pointer select-none min-w-[30px] transition"
+          >
             {Math.round(zoom * 100)}%
           </span>
 
@@ -525,21 +533,34 @@ export default function Toolbar({
           {/* Mini Separator */}
           <span className="text-[var(--text3)] opacity-40 font-mono text-[11px] select-none mx-0.5">|</span>
 
-          {/* Pan hand button 🖐️ */}
+          {/* Pan hand button with matching UI theme colors */}
           <button
-            title="Pan Workspace"
+            title={currentTool === 'pan' ? "Pan active (tap to return to Pen)" : "Pan / Navigate Workspace"}
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               setTool(currentTool === 'pan' ? 'pen' : 'pan');
             }}
-            className={`w-[22px] h-[22px] flex items-center justify-center text-[11px] rounded-[4px] transition cursor-pointer ${
+            className={`w-[22px] h-[22px] flex items-center justify-center rounded-[4px] transition cursor-pointer ${
               currentTool === 'pan'
-                ? 'bg-[#4f8ef7] text-white border border-[#4f8ef7]'
-                : 'bg-[var(--bg3)] hover:bg-[var(--bg4)] border border-[var(--border2)] text-[#5a73a3]'
+                ? 'bg-[#4f8ef7]/20 border border-[#4f8ef7] text-[#4f8ef7] shadow-[0_0_8px_rgba(79,142,247,0.35)]'
+                : 'bg-[var(--bg3)] hover:bg-[var(--bg4)] border border-[var(--border2)] text-[var(--text2)] hover:text-[var(--text)]'
             }`}
           >
-            🖐️
+            <svg 
+              className="w-3.5 h-3.5" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+              <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2" />
+              <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" />
+              <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+            </svg>
           </button>
         </div>
       </div>

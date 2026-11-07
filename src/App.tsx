@@ -70,10 +70,19 @@ export default function App() {
   const [history, setHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
 
-  // Undo/Redo/Save drawing limits
+  // Natural pen/pencil stroke physics point structure
+  interface StrokePoint {
+    x: number;
+    y: number;
+    time: number;
+    pressure: number;
+    width: number;
+  }
+
+  // Undo/Redo/Save drawing limits & natural drawing tracking
   const startPoints = useRef({ x: 0, y: 0 });
-  const lastPoint = useRef({ x: 0, y: 0 });
-  const lastMidPoint = useRef({ x: 0, y: 0 });
+  const activeStrokePoints = useRef<StrokePoint[]>([]);
+  const lastRenderedMid = useRef<{ x: number; y: number } | null>(null);
   const previewData = useRef<ImageData | null>(null);
 
   // Active Modals
@@ -109,6 +118,8 @@ export default function App() {
       setIsDrawing(false);
       isPanning.current = false;
       previewData.current = null;
+      activeStrokePoints.current = [];
+      lastRenderedMid.current = null;
       if (activeStrokeRollback.current && offscreenCanvasRef.current) {
         const oCtx = offscreenCanvasRef.current.getContext('2d');
         if (oCtx) {
@@ -580,7 +591,7 @@ export default function App() {
 
   // Drawing event coordinate mapping helpers representing high-performance zooming and panning offsets
   const getPointerPos = (
-    e: React.PointerEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+    e: any
   ) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
@@ -591,19 +602,18 @@ export default function App() {
     let clientX = 0;
     let clientY = 0;
 
-    const nativeEvent = e.nativeEvent;
-    if ('touches' in nativeEvent) {
-      if (nativeEvent.touches.length > 0) {
-        clientX = nativeEvent.touches[0].clientX;
-        clientY = nativeEvent.touches[0].clientY;
-      } else if (nativeEvent.changedTouches.length > 0) {
-        clientX = nativeEvent.changedTouches[0].clientX;
-        clientY = nativeEvent.changedTouches[0].clientY;
+    const ev = (e && typeof e === 'object' && 'nativeEvent' in e && e.nativeEvent) ? e.nativeEvent : e;
+    if (ev && typeof ev === 'object') {
+      if ('touches' in ev && ev.touches && ev.touches.length > 0) {
+        clientX = ev.touches[0].clientX;
+        clientY = ev.touches[0].clientY;
+      } else if ('changedTouches' in ev && ev.changedTouches && ev.changedTouches.length > 0) {
+        clientX = ev.changedTouches[0].clientX;
+        clientY = ev.changedTouches[0].clientY;
+      } else if (typeof ev.clientX === 'number') {
+        clientX = ev.clientX;
+        clientY = ev.clientY;
       }
-    } else if (e.type.startsWith('pointer') || e.type.startsWith('mouse')) {
-      const ev = e as React.PointerEvent<HTMLCanvasElement>;
-      clientX = ev.clientX;
-      clientY = ev.clientY;
     }
 
     const cx = clientX - rect.left;
@@ -615,29 +625,28 @@ export default function App() {
     };
   };
 
-  // 2. CANVAS DRAWING CODES
+  // 2. NATURAL PAPER DRAWING ENGINE
   const onPointerDown = (
     e: React.PointerEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
   ) => {
     if (sidebarOpen) setSidebarOpen(false);
 
-    const nativeEvent = e.nativeEvent;
+    const nativeEvent = (e && typeof e === 'object' && 'nativeEvent' in e && e.nativeEvent) ? e.nativeEvent : e;
     
     // Prevent zoom/pinch gestures from triggering stray line drawing
     const hasMultipleTouches = 
-      ('touches' in nativeEvent && nativeEvent.touches.length > 1) || 
-      ((nativeEvent as any).touches && (nativeEvent as any).touches.length > 1);
+      Boolean(nativeEvent && typeof nativeEvent === 'object' && 'touches' in nativeEvent && nativeEvent.touches && nativeEvent.touches.length > 1);
     if (hasMultipleTouches) {
       cancelCurrentStroke();
       return;
     }
 
-    if (e.cancelable) {
+    if (e && typeof e.cancelable === 'boolean' && e.cancelable && typeof e.preventDefault === 'function') {
       e.preventDefault();
     }
 
     // Capture the pointer stream to keep receiving events even if dragged off canvas borders
-    if ('pointerId' in e) {
+    if (e && 'pointerId' in e && e.currentTarget && typeof (e.currentTarget as any).setPointerCapture === 'function') {
       try {
         (e.currentTarget as HTMLCanvasElement).setPointerCapture(e.pointerId);
       } catch (err) {}
@@ -647,15 +656,12 @@ export default function App() {
     if (currentTool === 'pan') {
       let clientX = 0;
       let clientY = 0;
-      if ('touches' in nativeEvent) {
-        if (nativeEvent.touches.length > 0) {
-          clientX = nativeEvent.touches[0].clientX;
-          clientY = nativeEvent.touches[0].clientY;
-        }
-      } else {
-        const ev = e as React.PointerEvent<HTMLCanvasElement>;
-        clientX = ev.clientX;
-        clientY = ev.clientY;
+      if (nativeEvent && typeof nativeEvent === 'object' && 'touches' in nativeEvent && nativeEvent.touches && nativeEvent.touches.length > 0) {
+        clientX = nativeEvent.touches[0].clientX;
+        clientY = nativeEvent.touches[0].clientY;
+      } else if (nativeEvent && typeof nativeEvent.clientX === 'number') {
+        clientX = nativeEvent.clientX;
+        clientY = nativeEvent.clientY;
       }
       isPanning.current = true;
       startPanPos.current = { x: clientX, y: clientY };
@@ -677,8 +683,6 @@ export default function App() {
 
     setIsDrawing(true);
     startPoints.current = { x, y };
-    lastPoint.current = { x, y };
-    lastMidPoint.current = { x, y };
 
     initOffscreenCanvas();
     const oCanvas = offscreenCanvasRef.current;
@@ -691,20 +695,51 @@ export default function App() {
 
     if (currentTool === 'pen' || currentTool === 'eraser') {
       takeSnapSnapshot();
-      oCtx.beginPath();
-      oCtx.arc(
+
+      const isEraser = currentTool === 'eraser';
+      const isLight = theme === 'light';
+      const paperBg = isLight ? '#ffffff' : '#fafaf8';
+      const baseWidth = isEraser ? (pencilSize * 3) / zoom : pencilSize / zoom;
+
+      // Extract physical stylus pressure if supported (Apple Pencil, S-Pen, Surface Pen, Wacom)
+      const rawPressure = ('pressure' in e && e.pressure > 0 && e.pressure !== 0.5)
+        ? Math.max(0.3, Math.min(1.6, e.pressure * 1.35))
+        : 1.0;
+      const initialWidth = baseWidth * rawPressure;
+
+      const p0: StrokePoint = {
         x,
         y,
-        pencilSize * (currentTool === 'eraser' ? 1.5 : 0.5),
-        0,
-        Math.PI * 2
-      );
-      
-      const isLight = theme === 'light';
-      oCtx.fillStyle = currentTool === 'eraser' ? (isLight ? '#ffffff' : '#fafaf8') : pencilColor;
-      oCtx.fill();
+        time: performance.now(),
+        pressure: rawPressure,
+        width: initialWidth
+      };
+      activeStrokePoints.current = [p0];
+      lastRenderedMid.current = { x, y };
 
-      redrawVisibleCanvas();
+      // Render natural initial touch contact dot with smooth antialiasing
+      oCtx.save();
+      oCtx.beginPath();
+      oCtx.arc(x, y, initialWidth / 2, 0, Math.PI * 2);
+      oCtx.fillStyle = isEraser ? paperBg : pencilColor;
+      oCtx.fill();
+      oCtx.restore();
+
+      // Zero-lag direct hardware rendering onto visible canvas
+      const vCanvas = canvasRef.current;
+      if (vCanvas) {
+        const vCtx = vCanvas.getContext('2d');
+        if (vCtx) {
+          vCtx.save();
+          vCtx.translate(panOffset.x, panOffset.y);
+          vCtx.scale(zoom, zoom);
+          vCtx.beginPath();
+          vCtx.arc(x, y, initialWidth / 2, 0, Math.PI * 2);
+          vCtx.fillStyle = isEraser ? paperBg : pencilColor;
+          vCtx.fill();
+          vCtx.restore();
+        }
+      }
     } else {
       previewData.current = {} as ImageData; // truthy placeholder
     }
@@ -713,18 +748,17 @@ export default function App() {
   const onPointerMove = (
     e: React.PointerEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
   ) => {
-    const nativeEvent = e.nativeEvent;
+    const nativeEvent = (e && typeof e === 'object' && 'nativeEvent' in e && e.nativeEvent) ? e.nativeEvent : e;
     
     // Prevent zoom/pinch gestures from triggering stray line drawing
     const hasMultipleTouches = 
-      ('touches' in nativeEvent && nativeEvent.touches.length > 1) || 
-      ((nativeEvent as any).touches && (nativeEvent as any).touches.length > 1);
+      Boolean(nativeEvent && typeof nativeEvent === 'object' && 'touches' in nativeEvent && nativeEvent.touches && nativeEvent.touches.length > 1);
     if (hasMultipleTouches) {
       cancelCurrentStroke();
       return;
     }
 
-    if (e.cancelable) {
+    if (e && typeof e.cancelable === 'boolean' && e.cancelable && typeof e.preventDefault === 'function') {
       e.preventDefault();
     }
 
@@ -733,15 +767,12 @@ export default function App() {
       if (!isPanning.current) return;
       let clientX = 0;
       let clientY = 0;
-      if ('touches' in nativeEvent) {
-        if (nativeEvent.touches.length > 0) {
-          clientX = nativeEvent.touches[0].clientX;
-          clientY = nativeEvent.touches[0].clientY;
-        }
-      } else {
-        const ev = e as React.PointerEvent<HTMLCanvasElement>;
-        clientX = ev.clientX;
-        clientY = ev.clientY;
+      if (nativeEvent && typeof nativeEvent === 'object' && 'touches' in nativeEvent && nativeEvent.touches && nativeEvent.touches.length > 0) {
+        clientX = nativeEvent.touches[0].clientX;
+        clientY = nativeEvent.touches[0].clientY;
+      } else if (nativeEvent && typeof nativeEvent.clientX === 'number') {
+        clientX = nativeEvent.clientX;
+        clientY = nativeEvent.clientY;
       }
       const dx = clientX - startPanPos.current.x;
       const dy = clientY - startPanPos.current.y;
@@ -753,39 +784,119 @@ export default function App() {
     }
 
     if (!isDrawing) return;
-    const { x, y } = getPointerPos(e);
-    
-    initOffscreenCanvas();
-    const oCanvas = offscreenCanvasRef.current;
-    if (!oCanvas) return;
-    const oCtx = oCanvas.getContext('2d');
-    if (!oCtx) return;
 
     if (currentTool === 'pen' || currentTool === 'eraser') {
+      initOffscreenCanvas();
+      const oCanvas = offscreenCanvasRef.current;
+      if (!oCanvas) return;
+      const oCtx = oCanvas.getContext('2d');
+      if (!oCtx) return;
+
+      const vCanvas = canvasRef.current;
+      const vCtx = vCanvas ? vCanvas.getContext('2d') : null;
+
       const isEraser = currentTool === 'eraser';
-      const bgHex = theme === 'light' ? '#ffffff' : '#fafaf8';
-      const strokeWidth = isEraser ? pencilSize * 3 : pencilSize;
+      const isLight = theme === 'light';
+      const paperBg = isLight ? '#ffffff' : '#fafaf8';
+      const strokeColor = isEraser ? paperBg : pencilColor;
+      const baseWidth = isEraser ? (pencilSize * 3) / zoom : pencilSize / zoom;
 
-      // Midpoint quadratic Bézier smoothing eliminates all sharp corners and polygonal facets
-      const midX = (lastPoint.current.x + x) / 2;
-      const midY = (lastPoint.current.y + y) / 2;
+      // Access high-rate coalesced sub-pixel pointer events safely for ultra-smooth ink curves
+      let coalescedEvents: Array<any> = [e];
+      try {
+        if (nativeEvent && typeof nativeEvent === 'object' && 'getCoalescedEvents' in nativeEvent && typeof (nativeEvent as any).getCoalescedEvents === 'function') {
+          const ce = (nativeEvent as any).getCoalescedEvents();
+          if (Array.isArray(ce) && ce.length > 0) {
+            coalescedEvents = ce;
+          }
+        }
+      } catch (err) {}
 
-      oCtx.beginPath();
-      oCtx.moveTo(lastMidPoint.current.x, lastMidPoint.current.y);
-      oCtx.quadraticCurveTo(lastPoint.current.x, lastPoint.current.y, midX, midY);
-      oCtx.lineWidth = strokeWidth;
-      oCtx.lineCap = 'round';
-      oCtx.lineJoin = 'round';
-      oCtx.strokeStyle = isEraser ? bgHex : pencilColor;
-      oCtx.stroke();
+      const pts = activeStrokePoints.current;
+      if (pts.length === 0) return;
 
-      lastMidPoint.current = { x: midX, y: midY };
-      lastPoint.current = { x, y };
-      startPoints.current = { x, y };
+      if (vCtx) {
+        vCtx.save();
+        vCtx.translate(panOffset.x, panOffset.y);
+        vCtx.scale(zoom, zoom);
+      }
 
-      redrawVisibleCanvas();
+      for (let i = 0; i < coalescedEvents.length; i++) {
+        const subEv = coalescedEvents[i];
+        const { x, y } = getPointerPos(subEv);
+        const prev = pts[pts.length - 1];
+
+        const dist = Math.hypot(x - prev.x, y - prev.y);
+        if (dist < 0.25) continue; // Skip identical micro-points
+
+        const now = performance.now();
+        const dt = Math.max(1, now - prev.time);
+        const speed = dist / dt; // pixels per ms
+
+        // Natural pen physics: realistic dynamic velocity & pressure responsiveness
+        const hasStylusPressure = ('pressure' in subEv && subEv.pressure > 0 && subEv.pressure !== 0.5);
+        let pressureFactor = 1.0;
+        if (hasStylusPressure) {
+          pressureFactor = Math.max(0.3, Math.min(1.6, subEv.pressure * 1.35));
+        } else {
+          // Velocity tapering: faster stroke thins slightly; deliberate slow stroke enriches
+          pressureFactor = Math.max(0.68, Math.min(1.22, 1.06 - Math.min(speed, 2.8) * 0.12));
+        }
+
+        const targetWidth = baseWidth * pressureFactor;
+        // Smooth exponential moving average across stroke points to prevent jarring width jumps
+        const smoothedWidth = prev.width * 0.6 + targetWidth * 0.4;
+
+        const currentPt: StrokePoint = {
+          x,
+          y,
+          time: now,
+          pressure: pressureFactor,
+          width: smoothedWidth
+        };
+        pts.push(currentPt);
+
+        // Compute natural continuous Bézier curve segment using midpoints
+        if (pts.length >= 2) {
+          const p1 = pts[pts.length - 2];
+          const p2 = currentPt;
+          const midX = (p1.x + p2.x) / 2;
+          const midY = (p1.y + p2.y) / 2;
+          const startMid = lastRenderedMid.current || { x: p1.x, y: p1.y };
+          const segWidth = (p1.width + p2.width) / 2;
+
+          // 1. Render segment to offscreen paper bitmap
+          oCtx.beginPath();
+          oCtx.moveTo(startMid.x, startMid.y);
+          oCtx.quadraticCurveTo(p1.x, p1.y, midX, midY);
+          oCtx.lineWidth = segWidth;
+          oCtx.lineCap = 'round';
+          oCtx.lineJoin = 'round';
+          oCtx.strokeStyle = strokeColor;
+          oCtx.stroke();
+
+          // 2. Direct zero-latency hardware rendering to visible screen canvas
+          if (vCtx) {
+            vCtx.beginPath();
+            vCtx.moveTo(startMid.x, startMid.y);
+            vCtx.quadraticCurveTo(p1.x, p1.y, midX, midY);
+            vCtx.lineWidth = segWidth;
+            vCtx.lineCap = 'round';
+            vCtx.lineJoin = 'round';
+            vCtx.strokeStyle = strokeColor;
+            vCtx.stroke();
+          }
+
+          lastRenderedMid.current = { x: midX, y: midY };
+        }
+      }
+
+      if (vCtx) {
+        vCtx.restore();
+      }
     } else if (previewData.current) {
       // Direct shapes preview: clear and draw base offscreen drawing, then active shape outline
+      const { x, y } = getPointerPos(e);
       const canvas = canvasRef.current;
       if (canvas) {
         const ctx = canvas.getContext('2d');
@@ -796,7 +907,7 @@ export default function App() {
           const screenStartY = startPoints.current.y * zoom + panOffset.y;
           const screenEndX = x * zoom + panOffset.x;
           const screenEndY = y * zoom + panOffset.y;
-          drawVectorShape(ctx, currentTool, screenStartX, screenStartY, screenEndX, screenEndY, pencilSize * zoom);
+          drawVectorShape(ctx, currentTool, screenStartX, screenStartY, screenEndX, screenEndY, pencilSize);
         }
       }
     }
@@ -805,12 +916,12 @@ export default function App() {
   const onPointerUp = (
     e: React.PointerEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
   ) => {
-    if (e.cancelable) {
+    if (e && typeof e.cancelable === 'boolean' && e.cancelable && typeof e.preventDefault === 'function') {
       e.preventDefault();
     }
 
     // Release the pointer capture safely
-    if ('pointerId' in e) {
+    if (e && 'pointerId' in e && e.currentTarget && typeof (e.currentTarget as any).releasePointerCapture === 'function') {
       try {
         (e.currentTarget as HTMLCanvasElement).releasePointerCapture(e.pointerId);
       } catch (err) {}
@@ -831,27 +942,38 @@ export default function App() {
     if (!oCtx) return;
 
     if (currentTool === 'pen' || currentTool === 'eraser') {
+      const pts = activeStrokePoints.current;
       const isEraser = currentTool === 'eraser';
-      const bgHex = theme === 'light' ? '#ffffff' : '#fafaf8';
-      const strokeWidth = isEraser ? pencilSize * 3 : pencilSize;
+      const isLight = theme === 'light';
+      const paperBg = isLight ? '#ffffff' : '#fafaf8';
+      const strokeColor = isEraser ? paperBg : pencilColor;
 
-      oCtx.beginPath();
-      oCtx.moveTo(lastMidPoint.current.x, lastMidPoint.current.y);
-      oCtx.lineTo(lastPoint.current.x, lastPoint.current.y);
-      oCtx.lineWidth = strokeWidth;
-      oCtx.lineCap = 'round';
-      oCtx.lineJoin = 'round';
-      oCtx.strokeStyle = isEraser ? bgHex : pencilColor;
-      oCtx.stroke();
+      // Close the final stroke segment to the last coordinate
+      if (pts.length >= 2) {
+        const lastPt = pts[pts.length - 1];
+        const startMid = lastRenderedMid.current || { x: lastPt.x, y: lastPt.y };
 
+        oCtx.beginPath();
+        oCtx.moveTo(startMid.x, startMid.y);
+        oCtx.lineTo(lastPt.x, lastPt.y);
+        oCtx.lineWidth = lastPt.width;
+        oCtx.lineCap = 'round';
+        oCtx.lineJoin = 'round';
+        oCtx.strokeStyle = strokeColor;
+        oCtx.stroke();
+      }
+
+      // Redraw once at the end of the stroke for final pixel-perfect rasterization
       redrawVisibleCanvas();
+      activeStrokePoints.current = [];
+      lastRenderedMid.current = null;
     } else {
       const { x, y } = getPointerPos(e);
       if (previewData.current) {
         // Create rollback snapshot BEFORE shape is burned
         takeSnapSnapshot();
-        // Permanently draw shape in world coordinate space
-        drawVectorShape(oCtx, currentTool, startPoints.current.x, startPoints.current.y, x, y);
+        // Permanently draw shape in world coordinate space with zoom compensation
+        drawVectorShape(oCtx, currentTool, startPoints.current.x, startPoints.current.y, x, y, pencilSize / zoom);
         previewData.current = null;
         redrawVisibleCanvas();
       }
@@ -870,7 +992,7 @@ export default function App() {
     customWidth?: number
   ) => {
     ctx.strokeStyle = pencilColor;
-    ctx.lineWidth = customWidth !== undefined ? customWidth : pencilSize;
+    ctx.lineWidth = customWidth !== undefined ? customWidth : pencilSize / zoom;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
