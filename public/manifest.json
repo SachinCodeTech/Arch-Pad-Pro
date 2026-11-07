@@ -56,5 +56,20 @@
       ]
     }
   ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "file_handlers": [
+    {
+      "action": "/",
+      "name": "Arch Pad Drawing Project",
+      "icons": [
+        { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }
+      ],
+      "accept": {
+        "application/json": [".archpad", ".json"]
+      }
+    }
+  ],
   "prefer_related_applications": false
 }
