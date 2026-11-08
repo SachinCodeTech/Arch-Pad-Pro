@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "app.vercel.arch_pad_pro.twa",
-        "sha256_cert_fingerprints": ["11:93:93:D2:38:03:89:9A:D0:D0:2A:45:90:61:F7:1D:C4:1E:63:76:A9:96:EC:B0:F5:19:4D:7A:B6:B5:6E:6E"]
+        "package_name": "com.archpad.pro",
+        "sha256_cert_fingerprints": ["8C:CE:1E:EF:2A:D1:80:F7:24:90:08:8A:3A:BB:92:00:60:FB:55:B5:A5:A3:65:D1:4C:8F:4E:8A:FA:D4:2C:1D"]
       }
     }]
