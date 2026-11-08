@@ -70,10 +70,13 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 
 // Test connectivity on initial boot
 async function testConnection() {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return;
+  }
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if (error instanceof Error && (error.message.includes('the client is offline') || (error as any).code === 'unavailable')) {
+  } catch (error: any) {
+    if (error instanceof Error && (error.message.includes('the client is offline') || error.message.includes('unavailable') || (error as any)?.code === 'unavailable')) {
       console.info("Firestore client operating in offline mode.");
     }
   }
@@ -99,7 +102,11 @@ export async function getCloudProjects(userId: string): Promise<Project[]> {
       });
     });
     return list;
-  } catch (error) {
+  } catch (error: any) {
+    if (error && (error.code === 'unavailable' || String(error?.message).includes('unavailable') || String(error?.message).includes('offline'))) {
+      console.info('Operating in offline mode for cloud projects.');
+      return [];
+    }
     handleFirestoreError(error, OperationType.LIST, path);
   }
 }
@@ -125,7 +132,11 @@ export async function uploadProjectToCloud(userId: string, project: Project, can
       modified: Math.round(project.modified)
     };
     await setDoc(drawRef, updatedDraw);
-  } catch (error) {
+  } catch (error: any) {
+    if (error && (error.code === 'unavailable' || String(error?.message).includes('unavailable') || String(error?.message).includes('offline'))) {
+      console.info('Cloud sync deferred: client is offline.');
+      return;
+    }
     handleFirestoreError(error, OperationType.WRITE, `projects/${project.id}`);
   }
 }
@@ -139,7 +150,10 @@ export async function getCloudDrawing(projectId: string): Promise<string> {
       return snapshot.data().canvasData || '';
     }
     return '';
-  } catch (error) {
+  } catch (error: any) {
+    if (error && (error.code === 'unavailable' || String(error?.message).includes('unavailable') || String(error?.message).includes('offline'))) {
+      return '';
+    }
     handleFirestoreError(error, OperationType.GET, path);
   }
 }
@@ -151,7 +165,10 @@ export async function deleteProjectFromCloud(projectId: string): Promise<void> {
 
     const drawRef = doc(db, 'drawings', projectId);
     await deleteDoc(drawRef);
-  } catch (error) {
+  } catch (error: any) {
+    if (error && (error.code === 'unavailable' || String(error?.message).includes('unavailable') || String(error?.message).includes('offline'))) {
+      return;
+    }
     handleFirestoreError(error, OperationType.DELETE, `projects/${projectId}`);
   }
 }
