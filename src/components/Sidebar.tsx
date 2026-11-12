@@ -628,20 +628,6 @@ export default function Sidebar({
               </button>
             </div>
 
-            {/* PWA Home screen Promotion Trigger Button */}
-            {showInstall && (
-              <div
-                className="sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer border border-[#4f8ef7]/30 bg-[#4f8ef7]/8 select-none text-[var(--text)] transition-all hover:bg-[#4f8ef7]/15 mt-1"
-                onClick={onTriggerInstall}
-              >
-                <span className="sb-ico text-[15px] w-[20px] text-center shrink-0 text-[var(--accent)] font-[700]">⊕</span>
-                <div className="flex flex-col flex-1 leading-normal">
-                  <span className="sb-lbl text-[11px] font-[700] text-[var(--accent)]">Install App</span>
-                  <span className="text-[8px] text-[var(--text3)] font-mono">Add to Home Screen</span>
-                </div>
-              </div>
-            )}
-
             <div
               className="sb-item flex items-center gap-[10px] p-[9px_10px] rounded-[8px] cursor-pointer hover:bg-[var(--bg3)] select-none text-[var(--text)] transition-colors"
               onClick={() => {

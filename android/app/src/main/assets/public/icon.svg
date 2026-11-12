@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#0a0a14"/>
+    </linearGradient>
+    <linearGradient id="pen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6ab0ff"/>
+      <stop offset="100%" stop-color="#4f8ef7"/>
+    </linearGradient>
+    <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7c5cf7"/>
+      <stop offset="100%" stop-color="#9b7fff"/>
+    </linearGradient>
+  </defs>
+  <!-- App background -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <!-- Subtle grid lines in background -->
+  <g stroke="rgba(79,142,247,0.08)" stroke-width="1.5">
+    <line x1="128" y1="60" x2="128" y2="452"/>
+    <line x1="256" y1="60" x2="256" y2="452"/>
+    <line x1="384" y1="60" x2="384" y2="452"/>
+    <line x1="60" y1="128" x2="452" y2="128"/>
+    <line x1="60" y1="256" x2="452" y2="256"/>
+    <line x1="60" y1="384" x2="452" y2="384"/>
+  </g>
+  <!-- Set square / triangle — large architect tool -->
+  <path d="M 110 390 L 110 140 L 370 390 Z"
+    fill="none" stroke="url(#rule)" stroke-width="20"
+    stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Right angle mark -->
+  <path d="M 110 358 L 142 358 L 142 390"
+    fill="none" stroke="rgba(124,92,247,0.7)" stroke-width="10"
+    stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Drafting pencil — diagonal across triangle -->
+  <g transform="rotate(-38, 290, 220)">
+    <rect x="270" y="100" width="40" height="200" rx="6" fill="url(#pen)"/>
+    <polygon points="270,300 310,300 290,345" fill="#c8deff"/>
+    <polygon points="278,335 302,335 290,345" fill="#1a1a1a"/>
+    <rect x="270" y="95" width="40" height="18" rx="4" fill="rgba(255,255,255,0.25)"/>
+  </g>
+  <!-- Small tick mark lines on ruler edge -->
+  <g stroke="rgba(124,92,247,0.5)" stroke-width="5" stroke-linecap="round">
+    <line x1="152" y1="390" x2="152" y2="374"/>
+    <line x1="194" y1="390" x2="194" y2="374"/>
+    <line x1="236" y1="390" x2="236" y2="374"/>
+    <line x1="278" y1="390" x2="278" y2="374"/>
+    <line x1="320" y1="390" x2="320" y2="374"/>
+  </g>
+</svg>

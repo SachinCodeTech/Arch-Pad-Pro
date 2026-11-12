@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Terms of Service – Arch Pad Pro</title>
+    <meta name="description" content="Official Terms of Service for Arch Pad Pro architectural drafting application by CodeTech App Store." />
+    <meta name="theme-color" content="#090c12" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #090c12;
+        --card: #0f1420;
+        --border: rgba(255, 255, 255, 0.08);
+        --border-highlight: rgba(79, 142, 247, 0.25);
+        --accent: #4f8ef7;
+        --text: #f3f6fc;
+        --text-muted: #8e9bb0;
+        --text-dim: #606d82;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.7;
+        padding: 32px 16px 64px;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrapper {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .container {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 40px 36px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--border);
+      }
+      .brand-lockup {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .logo {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: #0d1117;
+        padding: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      }
+      h1 {
+        font-size: 24px;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: -0.4px;
+        line-height: 1.2;
+      }
+      .subtitle {
+        font-size: 11.5px;
+        color: var(--accent);
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-top: 4px;
+      }
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+      }
+      .back-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        border-color: var(--border-highlight);
+      }
+
+      .meta-strip {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 18px;
+        margin-top: 24px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-family: "JetBrains Mono", monospace;
+      }
+      .meta-strip span.sep {
+        color: var(--text-dim);
+      }
+      .meta-strip strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      h2 {
+        font-size: 17px;
+        font-weight: 700;
+        margin-top: 36px;
+        margin-bottom: 12px;
+        color: #ffffff;
+        letter-spacing: -0.2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      h2 .sec-num {
+        font-family: "JetBrains Mono", monospace;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 600;
+      }
+      p, li {
+        font-size: 13.5px;
+        color: var(--text-muted);
+        line-height: 1.7;
+        margin-bottom: 14px;
+      }
+      strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .contact-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 20px 22px;
+        margin-top: 32px;
+      }
+      .contact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+      .contact-item {
+        font-size: 12.5px;
+        color: var(--text-muted);
+      }
+      .contact-item .label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        display: block;
+        margin-bottom: 2px;
+      }
+      .contact-item .value {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+        font-size: 11.5px;
+        color: var(--text-dim);
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 16px 10px 48px;
+        }
+        .container {
+          padding: 24px 18px;
+          border-radius: 16px;
+        }
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 14px;
+        }
+        .back-btn {
+          width: 100%;
+          justify-content: center;
+        }
+        h1 {
+          font-size: 20px;
+        }
+        .meta-strip {
+          font-size: 11px;
+          padding: 10px 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="container">
+        <div class="header">
+          <div class="brand-lockup">
+            <img src="/icon.svg" alt="Arch Pad Logo" class="logo" />
+            <div>
+              <h1>Terms of Service</h1>
+              <div class="subtitle">Arch Pad Pro · Architectural CAD Sketchbook</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button onclick="returnToApp()" class="back-btn" style="cursor: pointer;">← Return to App</button>
+            <a href="/?modal=privacy" class="back-btn" style="background: rgba(79, 142, 247, 0.15); border-color: rgba(79, 142, 247, 0.4); color: #4f8ef7;">⚡ In-App Reader</a>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px 16px; border-radius: 12px; background: rgba(79, 142, 247, 0.08); border: 1px solid rgba(79, 142, 247, 0.2); font-size: 12px; color: #b6ceff; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+          <span>📱 <strong>In-App Expansion Available:</strong> You can read the complete Terms of Service and Legal Disclaimer directly inside the Arch Pad Pro canvas under <em>Sidebar → App → Privacy Policy → Terms of Service</em>.</span>
+          <a href="/?modal=privacy" style="color: #ffffff; background: #4f8ef7; padding: 4px 12px; border-radius: 6px; font-weight: 600; font-size: 11px; text-decoration: none;">Launch In App</a>
+        </div>
+
+        <div class="meta-strip">
+          <span>Application: <strong>Arch Pad Pro</strong></span>
+          <span class="sep">·</span>
+          <span>Package: <strong>app.vercel.arch_pad_pro.twa</strong></span>
+          <span class="sep">·</span>
+          <span>Entity: <strong>CodeTech App Store</strong></span>
+          <span class="sep">·</span>
+          <span>Effective: <strong>November 2026</strong></span>
+        </div>
+
+        <h2><span class="sec-num">01.</span> Acceptance of Terms</h2>
+        <p>
+          By accessing, downloading, or using the <strong>Arch Pad Pro</strong> application, you agree to be bound by these Terms of Service. These terms constitute a legally binding agreement between you and <strong>CodeTech App Store</strong>.
+        </p>
+
+        <h2><span class="sec-num">02.</span> Scope of Use & Professional Licensing</h2>
+        <p>
+          Arch Pad Pro is licensed for personal, educational, commercial, and professional architectural sketching, engineering calculation, and CAD drawing. You retain 100% intellectual property rights, copyright, and commercial ownership over all sketches, blueprints, and exported media you produce with the software.
+        </p>
+
+        <h2><span class="sec-num">03.</span> User Content Ownership & Data Security</h2>
+        <p>
+          CodeTech App Store does not claim any ownership or licensing rights over user-created designs. All vector paths, dimension values, and drawing notes are processed locally on your hardware. You are solely responsible for managing backups of your work using the built-in <strong>Export & Backup (.archpad)</strong> utility.
+        </p>
+
+        <h2><span class="sec-num">04.</span> Limitation of Liability</h2>
+        <p>
+          Arch Pad Pro is provided on an "as is" and "as available" basis without warranties of any kind. While engineered for architectural accuracy, users should verify measurements against certified structural engineering benchmarks prior to construction execution.
+        </p>
+
+        <h2><span class="sec-num">05.</span> Developer Entity & Inquiries</h2>
+        <div class="contact-card">
+          <div class="contact-grid">
+            <div class="contact-item">
+              <span class="label">Publisher Entity</span>
+              <span class="value">CodeTech App Store</span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Lead Developer</span>
+              <span class="value">Sheth Sachin D</span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Direct Support Email</span>
+              <span class="value"><a href="mailto:codetech.appstore@gmail.com">codetech.appstore@gmail.com</a></span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Package ID</span>
+              <span class="value">app.vercel.arch_pad_pro.twa</span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Privacy Policy</span>
+              <span class="value"><a href="/privacy.html">View Privacy Policy →</a></span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Production Domain</span>
+              <span class="value"><a href="https://arch-pad-pro.vercel.app">https://arch-pad-pro.vercel.app</a></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          © 2026 CodeTech App Store · All rights reserved · Arch Pad Pro
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function returnToApp() {
+        if (window.opener && !window.opener.closed) {
+          window.close();
+          return;
+        }
+        if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) {
+          window.history.back();
+          return;
+        }
+        window.location.href = '/?modal=privacy';
+      }
+    </script>
+  </body>
+</html>

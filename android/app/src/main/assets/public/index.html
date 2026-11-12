@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Arch Pad – Architectural CAD & Floor Plan Sketchbook</title>
+    <meta name="description" content="Professional Architectural CAD Sketchbook & Drafting Suite for floor plans, calibrated dimensions, structural grids, and architectural design." />
+    
+    <!-- Native App Configuration -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0c1016" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Arch Pad" />
+    <meta name="application-name" content="Arch Pad" />
+    <meta name="msapplication-TileColor" content="#0c1016" />
+    <meta name="msapplication-TileImage" content="/icons/icon-144.png" />
+    
+    <!-- App Icons -->
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/icons/icon-48.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/icons/icon-96.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+
+    <!-- Open Graph & App Store Previews -->
+    <meta property="og:type" content="application" />
+    <meta property="og:title" content="Arch Pad – Architectural CAD & Floor Plan Sketchbook" />
+    <meta property="og:description" content="Professional Architectural CAD Sketchbook & Drafting Suite for floor plans, calibrated dimensions, structural grids, and architectural design." />
+    <meta property="og:image" content="/screenshots/screenshot-desktop.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Arch Pad – Architectural CAD & Floor Plan Sketchbook" />
+    <meta name="twitter:description" content="Professional Architectural CAD Sketchbook & Drafting Suite for floor plans, calibrated dimensions, structural grids, and architectural design." />
+    <meta name="twitter:image" content="/screenshots/screenshot-desktop.png" />
+    <script type="module" crossorigin src="/assets/index-BwbgtX0c.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BU0idQL0.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {});
+        });
+      }
+    </script>
+  </body>
+</html>

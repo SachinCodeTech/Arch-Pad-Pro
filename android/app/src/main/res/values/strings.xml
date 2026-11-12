@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Arch Pad</string>
+    <string name="title_activity_main">Arch Pad</string>
+    <string name="package_name">com.archpad.pro</string>
+    <string name="custom_url_scheme">com.archpad.pro</string>
+</resources>

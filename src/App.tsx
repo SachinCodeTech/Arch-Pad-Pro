@@ -34,7 +34,15 @@ const APP_ICON_SVG = '/icon.svg';
 export default function App() {
   const [appReady, setAppReady] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentTool, setTool] = useState<ToolType>('pen');
+  const [currentTool, setToolState] = useState<ToolType>('pen');
+  const setTool = (t: ToolType) => {
+    try {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(10);
+      }
+    } catch (e) {}
+    setToolState(t);
+  };
   const [pencilSize, setPencilSize] = useState<number>(2);
   const [pencilColor, setPencilColor] = useState<string>('#1a1a1a');
   const [gridVisible, setGridVisible] = useState<boolean>(false);
@@ -570,6 +578,11 @@ export default function App() {
   };
 
   const handleUndo = () => {
+    try {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(12);
+      }
+    } catch (e) {}
     if (historyIndex > 0) {
       const prevIndex = historyIndex - 1;
       setHistoryIndex(prevIndex);
@@ -587,6 +600,11 @@ export default function App() {
   };
 
   const handleRedo = () => {
+    try {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(12);
+      }
+    } catch (e) {}
     if (historyIndex < history.length - 1) {
       const nextIndex = historyIndex + 1;
       setHistoryIndex(nextIndex);
@@ -1551,16 +1569,6 @@ export default function App() {
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
                 SYNCING…
               </span>
-            )}
-
-            {/* Native Install Prompt Indicator */}
-            {!Capacitor.isNativePlatform() && pwaPrompt && (
-              <button
-                onClick={handleTriggerInstall}
-                className="hdr-btn bg-gradient-to-r from-[#4f8ef7]/20 to-[#7c5cf7]/20 border border-[#7c5cf7]/40 text-[#4f8ef7] font-semibold text-[10px] p-[5px_8px] rounded-[6px] cursor-pointer"
-              >
-                📥 Install
-              </button>
             )}
             <button
               className="hdr-btn bg-[var(--bg3)] border border-[var(--border2)] text-[var(--text)] font-mono text-[10px] font-bold p-[5px_8px] rounded-[6px] cursor-pointer hover:bg-[var(--bg4)]"
