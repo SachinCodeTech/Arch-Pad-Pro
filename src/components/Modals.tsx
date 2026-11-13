@@ -874,7 +874,7 @@ export default function Modals({
                   </div>
                   <div className="flex justify-between items-center py-1.5 border-b border-[var(--border)]/60">
                     <span className="text-[var(--text3)] font-mono text-[10px]">Android Package ID</span>
-                    <span className="font-mono text-[10px] text-[#4f8ef7]">app.vercel.arch_pad_pro.twa</span>
+                    <span className="font-mono text-[10px] text-[#4f8ef7]">com.archpad.pro</span>
                   </div>
                   <div className="flex justify-between items-center py-1.5 border-b border-[var(--border)]/60">
                     <span className="text-[var(--text3)] font-mono text-[10px]">Official Support</span>
@@ -1237,11 +1237,11 @@ export default function Modals({
                   <div className="space-y-1.5">
                     <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
                       <span className="text-[var(--text3)] font-mono text-[10px]">App Version</span>
-                      <span className="font-mono font-semibold text-[var(--text)]">2.0.0 (Production)</span>
+                      <span className="font-mono font-semibold text-[var(--text)]">2.0.1 (Production)</span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-[var(--border)]/50">
                       <span className="text-[var(--text3)] font-mono text-[10px]">Package ID</span>
-                      <span className="font-mono text-[10px] text-[var(--text2)]">app.vercel.arch_pad_pro.twa</span>
+                      <span className="font-mono text-[10px] text-[var(--text2)]">com.archpad.pro</span>
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-[var(--text3)] font-mono text-[10px]">Publisher</span>
@@ -1349,7 +1349,7 @@ export default function Modals({
                 <div className="mt-4 p-3 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] text-[10.5px] text-[var(--text3)] font-mono leading-relaxed">
                   <div className="text-[10px] text-white font-semibold uppercase mb-1">Architecture Compliance</div>
                   <div>• ISO 216 / ANSI Drawing sheet aspect ratio standard</div>
-                  <div>• Certified Android Package: app.vercel.arch_pad_pro.twa</div>
+                  <div>• Certified Android Package: com.archpad.pro</div>
                   <div>• Indus Appstore / PhonePe developer certified package</div>
                 </div>
               </div>
@@ -1607,7 +1607,7 @@ export default function Modals({
                   </div>
                   <div className="flex justify-between items-center py-1.5">
                     <span className="text-[var(--text3)] font-mono text-[10px]">Package ID</span>
-                    <span className="font-mono text-[10px] text-[var(--text2)]">app.vercel.arch_pad_pro.twa</span>
+                    <span className="font-mono text-[10px] text-[var(--text2)]">com.archpad.pro</span>
                   </div>
                 </div>
               </div>
@@ -1643,7 +1643,7 @@ export default function Modals({
                 <div className="p-3.5 rounded-xl bg-[var(--bg3)]/50 border border-[var(--border)] space-y-2">
                   <div className="font-bold text-white text-[12px]">Local Storage & Data Backup Responsibility</div>
                   <p className="text-[11px] text-[var(--text3)] leading-relaxed">
-                    Sketches and workspace states are stored locally on your device. CodeTech App Store cannot restore data lost due to device hardware damage, factory operating system resets, or browser storage wipes. Users are strongly urged to utilize the built-in &quot;.archpad&quot; backup utility on a regular schedule.
+                    Sketches and workspace states are stored locally on your device. CodeTech App Store cannot restore data lost due to device hardware damage, factory operating system resets, or local storage wipes. Users are strongly urged to utilize the built-in &quot;.archpad&quot; backup utility on a regular schedule.
                   </p>
                 </div>
               </div>

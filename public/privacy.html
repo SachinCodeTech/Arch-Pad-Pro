@@ -297,7 +297,7 @@
         <div class="meta-strip">
           <span>Application: <strong>Arch Pad Pro</strong></span>
           <span class="sep">·</span>
-          <span>Package: <strong>app.vercel.arch_pad_pro.twa</strong></span>
+          <span>Package: <strong>com.archpad.pro</strong></span>
           <span class="sep">·</span>
           <span>Entity: <strong>CodeTech App Store</strong></span>
           <span class="sep">·</span>
@@ -324,14 +324,14 @@
 
         <h2><span class="sec-num">02.</span> Information We Handle</h2>
         <ul>
-          <li><strong>Local Vector & Drawing Data:</strong> All canvas paths, dimension calculations, text annotations, and project workspaces reside strictly in your device's local memory and browser storage. We do not inspect, transmit, or monetize your creative designs.</li>
+          <li><strong>Local Vector & Drawing Data:</strong> All canvas paths, dimension calculations, text annotations, and project workspaces reside strictly in your device's local sandboxed storage. We do not inspect, transmit, or monetize your creative designs.</li>
           <li><strong>Zero Advertising & Zero Analytics Telemetry:</strong> Arch Pad Pro does not incorporate Google Analytics, commercial tracker SDKs, profiling pixels, or advertising identifiers.</li>
           <li><strong>Optional Cloud Synchronization:</strong> If you intentionally choose to sign in with your Google Account, the app connects to Google Firebase Authentication and Firestore to synchronize drawings across your authorized personal devices. We never receive or store your Google account password.</li>
         </ul>
 
         <h2><span class="sec-num">03.</span> Device Permissions & Purpose</h2>
         <ul>
-          <li><strong>Internet Access:</strong> Required strictly for verifying Digital Asset Links in Trusted Web Activity (TWA) mode and performing user-initiated Google Cloud Firestore synchronization.</li>
+          <li><strong>Internet Access:</strong> Used strictly for user-initiated Google Cloud Firestore synchronization when signed in. All core architectural drafting and offline storage run natively on-device without internet access.</li>
           <li><strong>Local Storage (IndexedDB):</strong> Required to persist project blueprints and canvas buffers between app sessions on your device.</li>
           <li><strong>File Export & System Share:</strong> Invoked only when you explicitly export high-definition presentation cards, PNG images, PDF prints, or .archpad backup files to your device storage or via the native Android share intent.</li>
         </ul>
@@ -376,7 +376,7 @@
             </div>
             <div class="contact-item">
               <span class="label">Android Package Identifier</span>
-              <span class="value">app.vercel.arch_pad_pro.twa</span>
+              <span class="value">com.archpad.pro</span>
             </div>
             <div class="contact-item">
               <span class="label">Production Domain</span>
