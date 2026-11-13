@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "com.archpad.pro",
-        "sha256_cert_fingerprints": ["8C:CE:1E:EF:2A:D1:80:F7:24:90:08:8A:3A:BB:92:00:60:FB:55:B5:A5:A3:65:D1:4C:8F:4E:8A:FA:D4:2C:1D"]
+        "package_name": "com.archpadpro.app",
+        "sha256_cert_fingerprints": ["C4:CD:D6:F1:75:F5:D3:8E:50:97:92:DC:18:7C:44:32:F6:7F:EC:BD:8C:1F:4D:7B:81:D1:0B:73:E2:0A:2B:0E"]
       }
     }]
