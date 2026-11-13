@@ -159,11 +159,23 @@ export default function App() {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
   }, []);
 
-  // Check URL search parameters or hash to open modal in-app without external browser
+  // Check URL search parameters, hash, or native Android shortcut intents
   useEffect(() => {
+    const applyShortcut = (toolParam: string | null, actionParam: string | null) => {
+      if (toolParam && ['pen', 'eraser', 'text', 'line', 'rect', 'circle', 'arrow', 'pan'].includes(toolParam)) {
+        setToolState(toolParam as ToolType);
+      }
+      if (actionParam === 'new') {
+        setActiveModal('new-project-modal');
+      }
+    };
+
     try {
       const searchParams = new URLSearchParams(window.location.search);
       const modalParam = searchParams.get('modal') || window.location.hash.replace('#', '');
+      const toolParam = searchParams.get('tool');
+      const actionParam = searchParams.get('action');
+
       if (modalParam === 'privacy' || modalParam === 'privacy-modal') {
         setActiveModal('privacy-modal');
       } else if (modalParam === 'about' || modalParam === 'about-modal' || modalParam === 'credits') {
@@ -171,14 +183,32 @@ export default function App() {
       } else if (modalParam === 'info' || modalParam === 'info-modal') {
         setActiveModal('info-modal');
       }
+
+      applyShortcut(toolParam, actionParam);
+
+      const pendingNative = (window as any).__ARCHPAD_SHORTCUT__;
+      if (pendingNative) {
+        applyShortcut(pendingNative.tool || null, pendingNative.action || null);
+        delete (window as any).__ARCHPAD_SHORTCUT__;
+      }
+
       // Clean up URL without reload if query param was present
-      if (searchParams.has('modal')) {
+      if (searchParams.has('modal') || searchParams.has('tool') || searchParams.has('action')) {
         const cleanUrl = window.location.pathname;
         window.history.replaceState({ app: 'archpad-active' }, '', cleanUrl);
       }
     } catch (e) {
       console.warn('URL param parse error:', e);
     }
+
+    const onNativeShortcut = (e: Event) => {
+      const detail = (e as CustomEvent<{ tool?: string; action?: string }>).detail;
+      if (detail) {
+        applyShortcut(detail.tool || null, detail.action || null);
+      }
+    };
+    window.addEventListener('archpad-shortcut', onNativeShortcut);
+    return () => window.removeEventListener('archpad-shortcut', onNativeShortcut);
   }, []);
 
   // Android hardware/gesture back navigation handler

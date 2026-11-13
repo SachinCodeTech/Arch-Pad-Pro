@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="new_sketch"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_new_short"
+        android:shortcutLongLabel="@string/shortcut_new_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.archpad.pro"
+            android:targetClass="com.archpad.pro.MainActivity">
+            <extra android:name="shortcut_action" android:value="new" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="freehand_pen"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_pen_short"
+        android:shortcutLongLabel="@string/shortcut_pen_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.archpad.pro"
+            android:targetClass="com.archpad.pro.MainActivity">
+            <extra android:name="shortcut_tool" android:value="pen" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="draw_rect"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_rect_short"
+        android:shortcutLongLabel="@string/shortcut_rect_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.archpad.pro"
+            android:targetClass="com.archpad.pro.MainActivity">
+            <extra android:name="shortcut_tool" android:value="rect" />
+        </intent>
+    </shortcut>
+</shortcuts>

@@ -6,10 +6,10 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "fullscreen"],
+  "display_override": ["fullscreen", "standalone"],
   "orientation": "any",
-  "background_color": "#0c1016",
-  "theme_color": "#0c1016",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
   "lang": "en",
   "dir": "ltr",
   "categories": ["productivity", "design", "utilities"],
@@ -50,7 +50,35 @@
     {
       "name": "New Sketch",
       "short_name": "New",
+      "description": "Create a new architectural blueprint canvas",
       "url": "/?action=new",
+      "icons": [
+        { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }
+      ]
+    },
+    {
+      "name": "Freehand Pen",
+      "short_name": "Pen",
+      "description": "Open drafting canvas with freehand pen active",
+      "url": "/?tool=pen",
+      "icons": [
+        { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }
+      ]
+    },
+    {
+      "name": "Draw Line",
+      "short_name": "Line",
+      "description": "Draft straight structural lines on canvas",
+      "url": "/?tool=line",
+      "icons": [
+        { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }
+      ]
+    },
+    {
+      "name": "Draw Rectangle",
+      "short_name": "Rectangle",
+      "description": "Draft rooms and rectangular floor plans",
+      "url": "/?tool=rect",
       "icons": [
         { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }
       ]

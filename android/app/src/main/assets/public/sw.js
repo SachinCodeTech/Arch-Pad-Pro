@@ -297,5 +297,5 @@ self.addEventListener('message', (event) => {
 });
 
 // Built assets injected by Vite
-const BUILT_ASSETS = ["/assets/index-26gH1q7c.js","/assets/index-BU0idQL0.css"];
+const BUILT_ASSETS = ["/assets/index-BU0idQL0.css","/assets/index-v6TV23OE.js"];
 if (typeof PRECACHE_ASSETS !== 'undefined') { PRECACHE_ASSETS.push(...BUILT_ASSETS); }

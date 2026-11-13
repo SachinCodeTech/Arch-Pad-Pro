@@ -4,4 +4,10 @@
     <string name="title_activity_main">Arch Pad</string>
     <string name="package_name">com.archpad.pro</string>
     <string name="custom_url_scheme">com.archpad.pro</string>
+    <string name="shortcut_new_short">New Sketch</string>
+    <string name="shortcut_new_long">Create New Sketch</string>
+    <string name="shortcut_pen_short">Freehand Pen</string>
+    <string name="shortcut_pen_long">Draft with Freehand Pen</string>
+    <string name="shortcut_rect_short">Draw Rectangle</string>
+    <string name="shortcut_rect_long">Draft Floor Plan Shapes</string>
 </resources>
